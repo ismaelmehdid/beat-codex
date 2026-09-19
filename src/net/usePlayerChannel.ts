@@ -17,6 +17,7 @@ import type { Phase } from '../game/types'
 import { PLAYER_HP } from '../game/constants'
 import {
   EVT,
+  INPUT_SEND_MIN_INTERVAL_MS,
   type GameOverPayload,
   type InputPayload,
   type JoinPayload,
@@ -56,6 +57,8 @@ export interface PlayerChannel {
   me: MeState
   result: 'VICTORY' | 'DEFEAT' | null
   ranking: RankedPlayer[] | null
+  /** Host-advertised minimum gap between INPUT sends (grows with the room size). */
+  inputIntervalMs: number
   sendInput: (state: InputState) => void
 }
 
@@ -67,6 +70,7 @@ interface NetState {
   me: MeState
   result: 'VICTORY' | 'DEFEAT' | null
   ranking: RankedPlayer[] | null
+  inputIntervalMs: number
 }
 
 const ALIVE_ME: MeState = { hp: PLAYER_HP, alive: true, respawnAt: null, connected: true }
@@ -79,10 +83,21 @@ const INITIAL: NetState = {
   me: ALIVE_ME,
   result: null,
   ranking: null,
+  inputIntervalMs: INPUT_SEND_MIN_INTERVAL_MS,
 }
+
+/**
+ * A dead Wi-Fi path can leave the socket OPEN, so sends keep "succeeding" while nothing arrives.
+ * The host snapshots at 1Hz; going this long without any host message means we are effectively
+ * offline and the player must see it rather than press dead buttons.
+ */
+const HOST_SILENCE_MS = 4000
 
 /** Minimum gap between SNAPSHOT-triggered JOIN re-sends (the snapshot itself is ~1Hz). */
 const JOIN_RESEND_MIN_MS = 1500
+
+const readInterval = (v: unknown): number | null =>
+  typeof v === 'number' && Number.isFinite(v) && v >= 50 && v <= 5000 ? v : null
 
 const isPostGame = (p: Phase | null): boolean =>
   p === 'VICTORY' || p === 'DEFEAT' || p === 'PODIUM' || p === 'RESULTS'
@@ -104,6 +119,23 @@ function freshRound(s: NetState, phase: Phase): NetState {
 export function usePlayerChannel(roomId: string, playerId: string, name: string | null): PlayerChannel {
   const [net, setNet] = useState<NetState>(INITIAL)
   const channelRef = useRef<RealtimeChannel | null>(null)
+  const lastHostMsgAtRef = useRef(0)
+  const touch = useCallback(() => {
+    lastHostMsgAtRef.current = Date.now()
+  }, [])
+
+  // Watchdog: the host talks at least once a second, so silence means the socket is dead even if
+  // the browser still reports it OPEN. Surfacing it beats letting the player press dead buttons.
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      setNet((s) => {
+        if (s.status !== 'connected' || s.hostPhase === null) return s
+        if (Date.now() - lastHostMsgAtRef.current < HOST_SILENCE_MS) return s
+        return { ...s, status: 'error' }
+      })
+    }, 1000)
+    return () => window.clearInterval(id)
+  }, [])
 
   useEffect(() => {
     if (!supabase || !name || !roomId || !playerId) {
@@ -167,6 +199,7 @@ export function usePlayerChannel(roomId: string, playerId: string, name: string 
     // ---- incoming events ----------------------------------------------------------------------
 
     const onPhase = (p: PhasePayload) => {
+      touch()
       if (!p || typeof p.phase !== 'string') return
       setNet((s) => {
         if ((p.phase === 'COUNTDOWN' || p.phase === 'LOBBY') && s.hostPhase !== p.phase) return freshRound(s, p.phase)
@@ -175,6 +208,7 @@ export function usePlayerChannel(roomId: string, playerId: string, name: string 
     }
 
     const onSnapshot = (p: SnapshotPayload) => {
+      touch()
       if (!p || typeof p.phase !== 'string') return
       const mine = p.players ? p.players[playerId] : undefined
       // Self-healing handshake: the host does not know us while a game can still be joined.
@@ -188,17 +222,21 @@ export function usePlayerChannel(roomId: string, playerId: string, name: string 
         if (p.result && Array.isArray(p.ranking) && isPostGame(p.phase)) {
           next = { ...next, result: p.result, ranking: p.ranking }
         }
+        const interval = readInterval(p.inputIntervalMs)
+        if (interval !== null && interval !== next.inputIntervalMs) next = { ...next, inputIntervalMs: interval }
         return next
       })
     }
 
     const onPlayerState = (p: PlayerStatePayload) => {
+      touch()
       const mine = p && p.players ? p.players[playerId] : undefined
       if (!mine) return
       setNet((s) => ({ ...s, me: meFromNet(mine) }))
     }
 
     const onGameOver = (p: GameOverPayload) => {
+      touch()
       if (!p || (p.result !== 'VICTORY' && p.result !== 'DEFEAT')) return
       setNet((s) => ({
         ...s,
@@ -210,16 +248,20 @@ export function usePlayerChannel(roomId: string, playerId: string, name: string 
     }
 
     const onReset = () => {
+      touch()
       setNet((s) => freshRound(s, 'LOBBY'))
     }
 
     const onWelcome = (p: WelcomePayload) => {
+      touch()
       if (!p || p.playerId !== playerId) return
+      const interval = readInterval(p.inputIntervalMs)
       setNet((s) => ({
         ...s,
         welcomed: true,
         color: typeof p.color === 'string' && p.color ? p.color : s.color,
         hostPhase: typeof p.phase === 'string' ? p.phase : s.hostPhase,
+        inputIntervalMs: interval ?? s.inputIntervalMs,
       }))
     }
 
@@ -248,6 +290,7 @@ export function usePlayerChannel(roomId: string, playerId: string, name: string 
         if (status === 'SUBSCRIBED') {
           attempts = 0
           clearRetry()
+          touch()
           setNet((s) => ({ ...s, status: 'connected' }))
           const meta: PresenceMeta = { role: 'player', playerId, name: myName, joinedAt: Date.now() }
           try {
@@ -274,7 +317,7 @@ export function usePlayerChannel(roomId: string, playerId: string, name: string 
       clearRetry()
       teardownChannel()
     }
-  }, [roomId, playerId, name])
+  }, [roomId, playerId, name, touch])
 
   const sendInput = useCallback(
     (state: InputState) => {
@@ -305,6 +348,7 @@ export function usePlayerChannel(roomId: string, playerId: string, name: string 
     me: net.me,
     result: net.result,
     ranking: net.ranking,
+    inputIntervalMs: net.inputIntervalMs,
     sendInput,
   }
 }

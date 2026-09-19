@@ -249,7 +249,15 @@ export default function JoinPage() {
   const phase = net.hostPhase
   if (phase === 'COUNTDOWN' || phase === 'PLAYING') {
     return (
-      <Controller name={name} color={net.color} me={net.me} hostPhase={phase} status={net.status} sendInput={net.sendInput} />
+      <Controller
+        name={name}
+        color={net.color}
+        me={net.me}
+        hostPhase={phase}
+        status={net.status}
+        sendInput={net.sendInput}
+        inputIntervalMs={net.inputIntervalMs}
+      />
     )
   }
   if (phase === 'VICTORY' || phase === 'DEFEAT' || phase === 'PODIUM' || phase === 'RESULTS') {

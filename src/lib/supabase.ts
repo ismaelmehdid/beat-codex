@@ -8,7 +8,13 @@ export const supabaseConfigured = Boolean(url && anonKey)
 
 export const supabase: SupabaseClient | null = supabaseConfigured
   ? createClient(url!, anonKey!, {
-      realtime: { params: { eventsPerSecond: 40 } },
+      realtime: {
+        // NOTE: eventsPerSecond is a server-side hint; realtime-js does not throttle locally.
+        params: { eventsPerSecond: 40 },
+        // A venue Wi-Fi drop often leaves the socket OPEN with no close frame. The default 25s
+        // heartbeat means up to ~50s of "connected" with dead controls; 5s bounds it to ~10s.
+        heartbeatIntervalMs: 5000,
+      },
       auth: { persistSession: false, autoRefreshToken: false },
     })
   : null

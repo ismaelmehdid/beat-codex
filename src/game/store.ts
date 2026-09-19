@@ -35,6 +35,9 @@ if (typeof window !== 'undefined') {
     damageBoss: (n: number) => damageBoss(getWorld(), n, null),
     forceVictory: () => forceVictory(getWorld(), performance.now()),
     forceDefeat: () => forceDefeat(getWorld(), performance.now()),
+    setBossPaused: (on: boolean) => {
+      getWorld().bossPaused = on
+    },
   }
 }
 export const bumpWorld = (): void => useHostStore.getState().bump()

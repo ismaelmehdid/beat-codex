@@ -25,6 +25,7 @@ import {
   type PhasePayload,
   type PlayerNetState,
   type PlayerStatePayload,
+  inputIntervalForPlayers,
   type PresenceMeta,
   type SnapshotPayload,
   type WelcomePayload,
@@ -42,8 +43,11 @@ export interface HostChannel {
 }
 
 const SNAPSHOT_INTERVAL_MS = 1000
-/** PLAYER_STATE sends are coalesced across frames into at most one per this window. */
-const PLAYER_STATE_MIN_INTERVAL_MS = 100
+/**
+ * PLAYER_STATE sends are coalesced across frames into at most one per this window. Each send costs
+ * one Realtime event per subscriber, so this is the host's biggest lever on a crowded room.
+ */
+const PLAYER_STATE_MIN_INTERVAL_MS = 250
 /** A player added via JOIN gets this long to show up in presence before being marked absent. */
 const PRESENCE_GRACE_MS = 6000
 const MAX_NAME_LENGTH = 15
@@ -143,7 +147,12 @@ export function useHostChannel(roomId: string): HostChannel {
       if (typeof playerId !== 'string' || !playerId || RESERVED_IDS.has(playerId)) return
       const world = getWorld()
       const p = addPlayer(world, playerId, cleanName(payload.name))
-      const welcome: WelcomePayload = { playerId, phase: world.phase, color: p.color }
+      const welcome: WelcomePayload = {
+        playerId,
+        phase: world.phase,
+        color: p.color,
+        inputIntervalMs: inputIntervalForPlayers(presentRef.current?.size ?? 1),
+      }
       send(ch, EVT.WELCOME, welcome)
       bumpWorld()
     }
@@ -184,9 +193,11 @@ export function useHostChannel(roomId: string): HostChannel {
       })
       channel = ch
       channelRef.current = ch
+      // 'sync' only: phoenix fires it after every presence_state and presence_diff, and unlike the
+      // 'join'/'leave' callbacks it runs *after* the new state is committed. Reading presenceState()
+      // from a 'join' callback returns the previous (on a rebuilt channel: empty) state, which would
+      // mark every player disconnected on each reconnect.
       ch.on('presence', { event: 'sync' }, () => syncPresence(ch))
-      ch.on('presence', { event: 'join' }, () => syncPresence(ch))
-      ch.on('presence', { event: 'leave' }, () => syncPresence(ch))
       ch.on('broadcast', { event: EVT.JOIN }, (msg) => onJoin(ch, msg.payload))
       ch.on('broadcast', { event: EVT.INPUT }, (msg) => onInput(msg.payload))
       ch.subscribe((st, err) => {
@@ -205,7 +216,15 @@ export function useHostChannel(roomId: string): HostChannel {
           return
         }
         // CHANNEL_ERROR | TIMED_OUT | CLOSED
-        if (err) console.warn('[net] channel', st, err.message)
+        if (err) {
+          console.warn('[net] channel', st, err.message)
+          if (/many messages|rate/i.test(err.message)) {
+            console.error(
+              '[net] Supabase closed the channel for exceeding the events/second budget. ' +
+                'Raise "Max events per second" in Project Settings -> Realtime before the demo.',
+            )
+          }
+        }
         updateStatus('error')
         scheduleReconnect()
       })
@@ -298,6 +317,7 @@ export function useHostChannel(roomId: string): HostChannel {
         bossMaxHp: world.boss.maxHp,
         teamLives: world.teamLives,
         players,
+        inputIntervalMs: inputIntervalForPlayers(presentRef.current?.size ?? 0),
       }
       if (world.result) {
         snapshot.result = world.result

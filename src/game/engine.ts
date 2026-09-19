@@ -14,10 +14,11 @@ let nextFxId = 1
 // Construction / reset
 // ------------------------------------------------------------------------------------------------
 
-function createBoss(maxHp: number): Boss {
+function createBoss(maxHp: number, attackIntervalMs: number): Boss {
   return {
     hp: maxHp,
     maxHp,
+    attackIntervalMs,
     x: C.BOSS_X,
     y: C.BOSS_Y,
     z: C.BOSS_Z,
@@ -37,7 +38,7 @@ export function createInitialState(roomId: string): GameState {
     players: {},
     playerOrder: [],
     projectiles: [],
-    boss: createBoss(C.bossHpFor(0)),
+    boss: createBoss(C.bossHpFor(0), C.bossAttackIntervalFor(0)),
     teamLives: C.teamLivesFor(0),
     maxTeamLives: C.teamLivesFor(0),
     result: null,
@@ -47,6 +48,8 @@ export function createInitialState(roomId: string): GameState {
     netEvents: [],
     tick: 0,
     now: 0,
+    emptySince: null,
+    bossPaused: false,
   }
 }
 
@@ -108,7 +111,11 @@ export function addPlayer(state: GameState, id: string, name: string, opts: { is
     }
     return existing
   }
-  const index = state.playerOrder.length
+  // Indices drive color, depth lane and spawn x, so they must be unique among *present* players.
+  // playerOrder.length would recycle an index after a lobby leave and overlap two fighters exactly.
+  const used = new Set(allPlayers(state).map((q) => q.index))
+  let index = 0
+  while (used.has(index)) index++
   const p: Player = {
     id,
     name,
@@ -136,7 +143,7 @@ export function addPlayer(state: GameState, id: string, name: string, opts: { is
   }
   placeAtSpawn(p)
   state.players[id] = p
-  state.playerOrder.push(id)
+  state.playerOrder = [...state.playerOrder, id]
   // Late joiner mid-fight: the boss does not scale up (fair to the team), they just jump in.
   if (state.phase === 'PLAYING') pushFx(state, 'respawn', p.x, 0.5, p.z, { color: p.color, playerId: id })
   state.netEvents.push({ type: 'PLAYER_STATE', playerId: id })
@@ -181,7 +188,9 @@ export function applyInput(
   p.input.fire = input.fire
   p.input.updatedAt = now
   if (typeof input.fireSeq === 'number') {
-    if (p.lastFireSeq !== null && input.fireSeq !== p.lastFireSeq) p.pendingShots = 1
+    // Strictly greater: a *decrease* means the phone remounted (its counter restarted at 0), so
+    // rebase silently instead of spawning a phantom fireball on the first input of a new round.
+    if (p.lastFireSeq !== null && input.fireSeq > p.lastFireSeq) p.pendingShots = 1
     p.lastFireSeq = input.fireSeq
   }
   if (!p.connected) {
@@ -222,6 +231,7 @@ function resetCombatStats(state: GameState): void {
   state.shake = 0
   state.result = null
   state.ranking = []
+  state.emptySince = null
 }
 
 /** START pressed. Works from LOBBY or RESULTS. */
@@ -231,7 +241,7 @@ export function startCountdown(state: GameState, now: number): void {
   for (const p of allPlayers(state)) if (!p.connected) removePlayer(state, p.id)
   const n = connectedPlayerCount(state)
   const maxHp = C.bossHpFor(n)
-  state.boss = createBoss(maxHp)
+  state.boss = createBoss(maxHp, C.bossAttackIntervalFor(n))
   state.teamLives = C.teamLivesFor(n)
   state.maxTeamLives = state.teamLives
   resetCombatStats(state)
@@ -249,7 +259,7 @@ export function resetToLobby(state: GameState, now: number): void {
   state.now = now
   for (const p of allPlayers(state)) if (!p.connected) removePlayer(state, p.id)
   const n = connectedPlayerCount(state)
-  state.boss = createBoss(C.bossHpFor(n))
+  state.boss = createBoss(C.bossHpFor(n), C.bossAttackIntervalFor(n))
   state.teamLives = C.teamLivesFor(n)
   state.maxTeamLives = state.teamLives
   resetCombatStats(state)
@@ -418,7 +428,7 @@ function bossAttack(state: GameState): void {
     color: CODEX_RED,
   })
   state.boss.lastAttackAt = now
-  state.boss.nextAttackAt = now + C.BOSS_ATTACK_INTERVAL_MS
+  state.boss.nextAttackAt = now + state.boss.attackIntervalMs
   pushFx(state, 'boss_fire', sx, sy, sz, { color: CODEX_RED, playerId: target.id })
   addShake(state, 0.05)
 }
@@ -441,6 +451,17 @@ function explodeBossProjectile(state: GameState, pr: Projectile): void {
 
 function simulatePlaying(state: GameState, dt: number): void {
   const now = state.now
+
+  // Everyone's phone died or walked out: end the round instead of hanging on this screen forever.
+  if (connectedPlayerCount(state) === 0) {
+    if (state.emptySince === null) state.emptySince = now
+    else if (now - state.emptySince >= C.EMPTY_ROOM_ABORT_MS) {
+      finishGame(state, 'DEFEAT', now)
+      return
+    }
+  } else if (state.emptySince !== null) {
+    state.emptySince = null
+  }
 
   for (const p of allPlayers(state)) {
     // Stuck-input safety: no fresh update for a while -> release everything.
@@ -472,7 +493,8 @@ function simulatePlaying(state: GameState, dt: number): void {
     if (wantsFire && now - p.lastFireTime >= C.FIRE_COOLDOWN_MS) spawnFireball(state, p)
   }
 
-  if (now >= state.boss.nextAttackAt) bossAttack(state)
+  if (state.bossPaused) state.boss.nextAttackAt = now + state.boss.attackIntervalMs
+  else if (now >= state.boss.nextAttackAt) bossAttack(state)
 
   // Projectiles
   const survivors: Projectile[] = []

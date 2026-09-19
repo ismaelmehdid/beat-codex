@@ -57,7 +57,7 @@ wire(p1, 'p1')
 wire(p2, 'p2')
 
 try {
-  await host.goto(`${base}/host?room=${room}`, { waitUntil: 'networkidle' })
+  await host.goto(`${base}/host?room=${room}&nobloom=1`, { waitUntil: 'networkidle' })
   check('host lobby shows room', await textHas(host, new RegExp(`ROOM\\s*${room}`), 10000))
   check('host connected to supabase', await textHas(host, /SCAN TO JOIN/, 5000))
 
@@ -81,12 +81,20 @@ try {
   // wait for PLAYING
   await host.waitForFunction(() => window.__beatcodex.world().phase === 'PLAYING', null, { timeout: 10000 })
   await sleep(300)
+  // CODEX is not part of these input assertions and a stray 35-damage hit can kill a fighter
+  // mid-check, so hold its fire while input behaviour is measured.
+  await host.evaluate(() => window.__beatcodex.setBossPaused(true))
+  const tps = await host.evaluate(() => new Promise((res) => {
+    const t0 = window.__beatcodex.world().tick
+    const s = performance.now()
+    setTimeout(() => res(Math.round((window.__beatcodex.world().tick - t0) / ((performance.now() - s) / 1000))), 1000)
+  }))
+  check('host loop runs at a usable rate', tps >= 10, `${tps} ticks/s`)
   const before = await playerByName(host, 'ALICE')
-  await hold(p1, /→|right/i, 900)
+  await hold(p1, /→|right/i, 2500)
   await sleep(600)
   const after = await playerByName(host, 'ALICE')
-  // headless SwiftShader runs a few fps and the engine clamps dt, so simulated time is slow: only require clear movement
-  check('RIGHT moves ALICE right', after.x > before.x + 0.5, `x ${before.x.toFixed(1)} -> ${after.x.toFixed(1)}`)
+  check('RIGHT moves ALICE right', after.x > before.x + 2, `x ${before.x.toFixed(1)} -> ${after.x.toFixed(1)}`)
   check('release stops ALICE', after.vx === 0 && !after.input.right, `vx=${after.vx}`)
   const bobBefore = await playerByName(host, 'BOB')
   check('BOB did not move', Math.abs(bobBefore.x - (await playerByName(host, 'BOB')).x) < 0.01)
@@ -109,7 +117,10 @@ try {
   check('ALICE damage attributed', alice.damageDealt > 0, `damageDealt=${alice.damageDealt}`)
   check('boss HP dropped by total damage', Math.abs(w1.boss.maxHp - w1.boss.hp - Object.values(w1.players).reduce((s, p) => s + p.damageDealt, 0)) < 0.01)
 
+  check('boss held fire while paused', w1.teamLives === Object.values(w1.players).length * 3 || w1.teamLives >= 8, `teamLives=${w1.teamLives}`)
+
   // death & respawn
+  await host.evaluate(() => window.__beatcodex.setBossPaused(false))
   await host.evaluate((id) => window.__beatcodex.kill(id), alice.id)
   check('ALICE phone shows YOU DIED', await textHas(p1, /YOU DIED/, 5000))
   await p1.screenshot({ path: 'test-results/e2e/p1-dead.png' })

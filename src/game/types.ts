@@ -70,6 +70,8 @@ export interface Projectile {
 export interface Boss {
   hp: number
   maxHp: number
+  /** ms between attacks, chosen from the player count when the round starts */
+  attackIntervalMs: number
   x: number
   y: number
   z: number
@@ -135,4 +137,8 @@ export interface GameState {
   tick: number
   /** host clock of the last step */
   now: number
+  /** host clock since when PLAYING has had zero connected players (null when someone is present) */
+  emptySince: number | null
+  /** CODEX holds fire (rehearsal / tests). Players can still shoot. */
+  bossPaused: boolean
 }

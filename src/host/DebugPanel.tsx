@@ -145,6 +145,16 @@ export default function DebugPanel() {
             </button>
           </div>
           <div className="debug-row">
+            <button
+              className="btn btn-tiny"
+              disabled={!playing}
+              onClick={act(() => {
+                const w = world()
+                w.bossPaused = !w.bossPaused
+              })}
+            >
+              {world().bossPaused ? 'Resume CODEX' : 'Hold CODEX fire'}
+            </button>
             <button className="btn btn-tiny" disabled={!playing} onClick={act(() => damageBoss(world(), 100, DEBUG_LOCAL_ID))}>
               Damage CODEX 100
             </button>

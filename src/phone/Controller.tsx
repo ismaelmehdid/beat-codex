@@ -47,9 +47,12 @@ export function vibrate(pattern: number | number[]): void {
 // Input sender: {l, r, f, s} -> coalesced INPUT sends + heartbeat while held + release duplicate
 // ------------------------------------------------------------------------------------------------
 
-function useInputSender(sendInput: (s: InputState) => void) {
+function useInputSender(sendInput: (s: InputState) => void, intervalMs: number) {
   const sendRef = useRef(sendInput)
   sendRef.current = sendInput
+  // The host raises this as the room fills up: every broadcast costs one Realtime event per phone.
+  const intervalRef = useRef(intervalMs)
+  intervalRef.current = Math.max(INPUT_SEND_MIN_INTERVAL_MS, intervalMs)
 
   const stateRef = useRef<InputState>({ l: 0, r: 0, f: 0, s: 0 })
   const lastSendAtRef = useRef(0)
@@ -65,8 +68,9 @@ function useInputSender(sendInput: (s: InputState) => void) {
   }, [])
 
   const scheduleSend = useCallback(() => {
+    const min = intervalRef.current
     const elapsed = Date.now() - lastSendAtRef.current
-    if (elapsed >= INPUT_SEND_MIN_INTERVAL_MS) {
+    if (elapsed >= min) {
       clearTimer(trailingRef)
       sendNow()
       return
@@ -75,7 +79,7 @@ function useInputSender(sendInput: (s: InputState) => void) {
       trailingRef.current = window.setTimeout(() => {
         trailingRef.current = null
         sendNow()
-      }, INPUT_SEND_MIN_INTERVAL_MS - elapsed)
+      }, min - elapsed)
     }
   }, [sendNow])
 
@@ -93,6 +97,7 @@ function useInputSender(sendInput: (s: InputState) => void) {
       const prev = stateRef.current
       const s = bumpFireSeq ? prev.s + 1 : prev.s
       if (prev.l === l && prev.r === r && prev.f === f && prev.s === s) return
+      const movementChanged = prev.l !== l || prev.r !== r
       stateRef.current = { l, r, f, s }
       setHeld({ l: l === 1, r: r === 1, f: f === 1 })
 
@@ -101,10 +106,11 @@ function useInputSender(sendInput: (s: InputState) => void) {
         clearTimer(dupRef)
         scheduleSend()
         if (heartbeatRef.current === null) {
-          heartbeatRef.current = window.setInterval(sendNow, INPUT_HEARTBEAT_MS)
+          const beat = Math.max(INPUT_HEARTBEAT_MS, intervalRef.current)
+          heartbeatRef.current = window.setInterval(sendNow, beat)
         }
-      } else {
-        // Everything released: send immediately, once more shortly after, stop the heartbeat.
+      } else if (movementChanged) {
+        // Movement released: never delay this one. A fighter stuck running is the worst failure.
         clearTimer(trailingRef)
         clearTimer(heartbeatRef, true)
         sendNow()
@@ -113,6 +119,11 @@ function useInputSender(sendInput: (s: InputState) => void) {
           dupRef.current = null
           sendNow()
         }, RELEASE_DUPLICATE_DELAY_MS)
+      } else {
+        // Only FIRE was released: worth coalescing. At worst the host auto-fires one extra shot
+        // (bounded by the 450ms cooldown), and it saves ~2 sends per tap in a crowded room.
+        clearTimer(heartbeatRef, true)
+        scheduleSend()
       }
     },
     [scheduleSend, sendNow],
@@ -186,6 +197,8 @@ function useCountdownSeconds(deadline: number | null): number | null {
 // ------------------------------------------------------------------------------------------------
 
 export interface ControllerProps {
+  /** Host-advertised minimum gap between INPUT sends (grows with the room size). */
+  inputIntervalMs?: number
   name: string
   color: string | null
   me: MeState
@@ -194,8 +207,16 @@ export interface ControllerProps {
   sendInput: (s: InputState) => void
 }
 
-export default function Controller({ name, color, me, hostPhase, status, sendInput }: ControllerProps) {
-  const { held, press, releasePointer, releaseAll } = useInputSender(sendInput)
+export default function Controller({
+  name,
+  color,
+  me,
+  hostPhase,
+  status,
+  sendInput,
+  inputIntervalMs = INPUT_SEND_MIN_INTERVAL_MS,
+}: ControllerProps) {
+  const { held, press, releasePointer, releaseAll } = useInputSender(sendInput, inputIntervalMs)
   const alive = me.alive
   const respawnSecs = useCountdownSeconds(alive ? null : me.respawnAt)
 

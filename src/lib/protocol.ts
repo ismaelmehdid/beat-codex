@@ -88,6 +88,8 @@ export interface SnapshotPayload {
   players: Record<string, PlayerNetState>
   result?: 'VICTORY' | 'DEFEAT' | null
   ranking?: RankedPlayer[]
+  /** Host-chosen minimum gap between INPUT sends for this room size. */
+  inputIntervalMs?: number
 }
 
 export interface GameOverPayload {
@@ -99,9 +101,24 @@ export interface WelcomePayload {
   playerId: string
   phase: Phase
   color: string
+  /** Host-chosen minimum gap between INPUT sends for this room size (see inputIntervalForPlayers). */
+  inputIntervalMs?: number
 }
 
 /** Phones coalesce INPUT sends to at most one per this interval (taps are never lost thanks to `s`). */
-export const INPUT_SEND_MIN_INTERVAL_MS = 120
+export const INPUT_SEND_MIN_INTERVAL_MS = 150
 /** While any control is held, phones re-send INPUT at this interval so the host timeout never trips. */
-export const INPUT_HEARTBEAT_MS = 400
+export const INPUT_HEARTBEAT_MS = 600
+/** Upper bound for the adaptive interval; must stay well under INPUT_TIMEOUT_MS. */
+export const INPUT_SEND_MAX_INTERVAL_MS = 500
+
+/**
+ * Every broadcast on a shared channel costs one event per subscriber, so phone traffic grows with
+ * playerCount^2. The host advertises a floor for the send interval so a big room stays inside the
+ * project's events/second budget. Taps are never dropped (the `s` counter accumulates), they are
+ * only delivered a little later.
+ */
+export function inputIntervalForPlayers(playerCount: number): number {
+  if (playerCount <= 6) return INPUT_SEND_MIN_INTERVAL_MS
+  return Math.min(INPUT_SEND_MAX_INTERVAL_MS, INPUT_SEND_MIN_INTERVAL_MS + (playerCount - 6) * 25)
+}
