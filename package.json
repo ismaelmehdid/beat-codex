@@ -1,0 +1,32 @@
+{
+  "name": "beat-codex",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host",
+    "build": "tsc -b && vite build",
+    "typecheck": "tsc -b",
+    "preview": "vite preview --host"
+  },
+  "dependencies": {
+    "@react-three/drei": "^10",
+    "@react-three/fiber": "^9",
+    "@react-three/rapier": "^2",
+    "@supabase/supabase-js": "^2",
+    "qrcode.react": "^4",
+    "react": "~19.2.0",
+    "react-dom": "~19.2.0",
+    "react-router-dom": "^7",
+    "three": "^0.179.0",
+    "zustand": "^5"
+  },
+  "devDependencies": {
+    "@types/react": "~19.2.0",
+    "@types/react-dom": "~19.2.0",
+    "@types/three": "^0.179.0",
+    "@vitejs/plugin-react": "^5",
+    "typescript": "~5.9",
+    "vite": "^7"
+  }
+}
