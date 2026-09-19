@@ -108,7 +108,7 @@ function Fighter({ id }: { id: string }) {
   return (
     <group ref={outer}>
       <group ref={model}>
-        <VoxelFighter color={color} walkRef={walkRef} flashRef={flashRef} dimRef={dimRef} />
+        <VoxelFighter color={color} walkRef={walkRef} flashRef={flashRef} dimRef={dimRef} scale={1.15} />
       </group>
       <group ref={live}>
         <mesh geometry={discGeo} material={mats.disc} rotation={FLAT} position={[0, 0.02, 0]} />

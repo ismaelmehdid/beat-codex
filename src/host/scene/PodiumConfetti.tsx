@@ -60,7 +60,7 @@ export default function PodiumConfetti() {
     return () => {
       for (const s of pool) {
         if (s.body) {
-          world.removeRigidBody(s.body)
+          safeRemove(s.body)
           s.body = null
         }
       }
@@ -68,6 +68,15 @@ export default function PodiumConfetti() {
       material.dispose()
     }
   }, [world, geometry, material])
+
+  /** <Physics> frees the world before children clean up; removing from a freed/reset world traps in WASM. */
+  const safeRemove = (body: RapierRigidBody): void => {
+    try {
+      if (world.getRigidBody(body.handle)) world.removeRigidBody(body)
+    } catch {
+      /* world already gone */
+    }
+  }
 
   const spawn = (count: number, t: number): void => {
     let n = 0
@@ -119,7 +128,7 @@ export default function PodiumConfetti() {
       const body = s.body
       if (!body) continue
       if (t >= s.dieAt) {
-        world.removeRigidBody(body)
+        safeRemove(body)
         s.body = null
         mesh.setMatrixAt(i, hidden)
         continue

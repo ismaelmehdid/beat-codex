@@ -110,7 +110,7 @@ export default function Projectiles() {
         _m.compose(_pos, _quat, _scl)
         _m.toArray(fireArr, nf * 16)
         // white-hot core tint for bloom
-        fireColor.setXYZ(nf, 0.6 + _color.r * 1.2, 0.6 + _color.g * 1.2, 0.6 + _color.b * 1.2)
+        fireColor.setXYZ(nf, 0.22 + _color.r * 0.95, 0.22 + _color.g * 0.95, 0.22 + _color.b * 0.95)
         nf++
         // trail: stretched blobs behind the fireball along -velocity
         for (let k = 0; k < TRAIL_PER_FIREBALL; k++) {

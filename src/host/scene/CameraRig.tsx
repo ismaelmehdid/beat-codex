@@ -10,10 +10,10 @@ import { BOSS_X, BOSS_Y, PLAYER_MIN_X, VICTORY_DURATION_MS } from '../../game/co
 import { getWorld } from '../../game/store'
 
 const FOV = 50
-const LEFT = PLAYER_MIN_X - 1
-const RIGHT = BOSS_X + 6 // satellites orbit past the core
-const TOP = 10.5
-const BOTTOM = -1
+const LEFT = PLAYER_MIN_X - 1.2
+const RIGHT = BOSS_X + 5.6 // satellites orbit past the core
+const TOP = 9.8
+const BOTTOM = -0.6
 
 const PODIUM_POS = new THREE.Vector3(0, 4.5, 15)
 const PODIUM_LOOK = new THREE.Vector3(0, 2.5, 0)
@@ -30,8 +30,8 @@ function fightFraming(aspect: number, pos: THREE.Vector3, look: THREE.Vector3): 
   const tanHalf = Math.tan((FOV * Math.PI) / 360)
   const cx = (LEFT + RIGHT) / 2
   const cy = (TOP + BOTTOM) / 2
-  const halfW = ((RIGHT - LEFT) / 2) * 1.06
-  const halfH = ((TOP - BOTTOM) / 2) * 1.12
+  const halfW = ((RIGHT - LEFT) / 2) * 1.03
+  const halfH = ((TOP - BOTTOM) / 2) * 1.08
   const d = Math.max(halfW / (tanHalf * Math.max(0.5, aspect)), halfH / tanHalf)
   look.set(cx, cy - 0.75, 0)
   pos.set(cx, cy + 2.5, d)

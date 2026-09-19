@@ -52,7 +52,7 @@ export default function GameScene() {
       </Suspense>
       {bloom && (
         <EffectComposer multisampling={4}>
-          <Bloom mipmapBlur intensity={1.2} luminanceThreshold={0.6} luminanceSmoothing={0.25} radius={0.75} />
+          <Bloom mipmapBlur intensity={0.9} luminanceThreshold={0.72} luminanceSmoothing={0.3} radius={0.7} />
         </EffectComposer>
       )}
     </Canvas>

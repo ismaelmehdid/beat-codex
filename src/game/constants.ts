@@ -1,9 +1,9 @@
 // ---- Arena layout (world units). X is the gameplay axis. Players left, CODEX right. ----
 export const FLOOR_Y = 0
-export const PLAYER_MIN_X = -17
-export const PLAYER_MAX_X = -3
-export const PLAYER_SPAWN_X = -12
-export const PLAYER_SPAWN_X_JITTER = 3
+export const PLAYER_MIN_X = -14
+export const PLAYER_MAX_X = -2.5
+export const PLAYER_SPAWN_X = -9
+export const PLAYER_SPAWN_X_JITTER = 2.5
 export const PLAYER_Z_LANES = 7 // lanes across depth
 export const PLAYER_Z_STEP = 1.1
 export const PLAYER_RADIUS = 0.8
@@ -11,7 +11,7 @@ export const PLAYER_HEIGHT = 1.8
 export const PLAYER_HP = 100
 export const PLAYER_SPEED = 9 // units / second
 
-export const BOSS_X = 12
+export const BOSS_X = 10
 export const BOSS_Y = 5.5
 export const BOSS_Z = 0
 export const BOSS_CORE_SIZE = 6 // edge length of the main cube

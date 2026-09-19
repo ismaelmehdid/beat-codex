@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { createInitialState } from './engine'
+import { createInitialState, damageBoss, forceDefeat, forceVictory, killPlayer } from './engine'
 import type { GameState } from './types'
 
 /**
@@ -26,6 +26,17 @@ export const useHostStore = create<HostStore>((set) => ({
 }))
 
 export const getWorld = (): GameState => useHostStore.getState().world
+
+// Test/debug introspection hook (read-only usage intended): window.__beatcodex.world()
+if (typeof window !== 'undefined') {
+  ;(window as unknown as { __beatcodex?: unknown }).__beatcodex = {
+    world: getWorld,
+    kill: (id: string) => killPlayer(getWorld(), id),
+    damageBoss: (n: number) => damageBoss(getWorld(), n, null),
+    forceVictory: () => forceVictory(getWorld(), performance.now()),
+    forceDefeat: () => forceDefeat(getWorld(), performance.now()),
+  }
+}
 export const bumpWorld = (): void => useHostStore.getState().bump()
 
 /** Subscribe to a derived primitive from the world (re-evaluated on every bump). */

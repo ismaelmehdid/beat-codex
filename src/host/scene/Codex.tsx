@@ -76,6 +76,7 @@ const CRACKS_25: { pos: V3; rot: V3; len: number }[] = [
 const WHITE = new THREE.Color('#ffffff')
 const RED = new THREE.Color(CODEX_RED)
 const PLATE_EMISSIVE = new THREE.Color('#2a0006')
+const HIT_FLASH = new THREE.Color('#8a1a14')
 const _v = new THREE.Vector3()
 const _q = new THREE.Quaternion()
 const _e = new THREE.Euler()
@@ -195,10 +196,10 @@ export default function Codex() {
 
       // hit flash + nudge
       if (now < b.hitFlashUntil) {
-        plateEmissive = WHITE
-        plateIntensity = 1.3
-        innerIntensity = 4
-        r.position.x += 0.4
+        plateEmissive = HIT_FLASH
+        plateIntensity = 0.75
+        innerIntensity = 2.4
+        r.position.x += 0.18
       }
       // attack recoil
       const sinceAttack = now - b.lastAttackAt

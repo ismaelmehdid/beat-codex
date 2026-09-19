@@ -142,11 +142,14 @@
   gap: 1vh;
   overflow: hidden;
   background:
-    radial-gradient(ellipse at 50% 120%, rgba(255, 43, 214, 0.18), transparent 55%),
-    radial-gradient(ellipse at 50% -20%, rgba(0, 240, 255, 0.16), transparent 55%),
-    var(--bg);
+    radial-gradient(ellipse at 50% 120%, rgba(255, 43, 214, 0.14), transparent 55%),
+    radial-gradient(ellipse at 50% -20%, rgba(0, 240, 255, 0.12), transparent 55%),
+    rgba(5, 5, 16, 0.78);
 }
 .lobby-grid {
+  display: none;
+}
+.lobby-grid-unused {
   position: absolute;
   inset: -50% 0 0 0;
   pointer-events: none;
@@ -572,8 +575,9 @@
 
 .hud-dealers {
   position: absolute;
-  left: 18px;
+  right: 18px;
   bottom: 18px;
+  text-align: right;
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -581,13 +585,10 @@
   font-weight: 800;
   letter-spacing: 0.12em;
   background: rgba(5, 5, 16, 0.45);
-  border-left: 3px solid rgba(0, 240, 255, 0.5);
-  padding: 8px 14px 8px 12px;
-  border-radius: 0 8px 8px 0;
+  border-right: 3px solid rgba(0, 240, 255, 0.5);
+  padding: 8px 12px 8px 14px;
+  border-radius: 8px 0 0 8px;
   min-width: 14vw;
-}
-.hud-dealers.debug-offset {
-  bottom: 300px;
 }
 .hud-dealers-title {
   font-size: 0.6em;
@@ -640,16 +641,20 @@
   background: radial-gradient(ellipse at center, rgba(5, 5, 16, 0.55), transparent 70%);
 }
 .end-line1 {
-  font-size: clamp(40px, 7vw, 130px);
+  font-size: clamp(32px, 5.5vw, 100px);
   font-weight: 900;
-  letter-spacing: 0.3em;
+  letter-spacing: 0.22em;
+  text-align: center;
+  white-space: nowrap;
   animation: end-slam 0.7s cubic-bezier(0.2, 1.5, 0.3, 1) both;
 }
 .end-line2 {
-  font-size: clamp(48px, 9vw, 170px);
+  font-size: clamp(40px, 7.6vw, 150px);
   font-weight: 900;
-  letter-spacing: 0.2em;
+  letter-spacing: 0.1em;
   line-height: 1;
+  text-align: center;
+  white-space: nowrap;
   animation: end-rise 0.8s cubic-bezier(0.2, 1.3, 0.3, 1) both;
 }
 .end-banner.victory .end-line1 {

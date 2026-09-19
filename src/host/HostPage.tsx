@@ -65,13 +65,14 @@ export default function HostPage() {
 
   return (
     <div className="host-root">
+      {/* Always mounted: one WebGL context for the whole session, warmed up during the lobby. */}
+      <div className="host-scene">
+        <GameScene />
+      </div>
       {!inGame ? (
         <Lobby roomId={roomId} netStatus={net.status} />
       ) : (
         <>
-          <div className="host-scene">
-            <GameScene />
-          </div>
           {phase === 'COUNTDOWN' && <Countdown />}
           {showHud && <HUD />}
           {showEnd && <EndBanner />}

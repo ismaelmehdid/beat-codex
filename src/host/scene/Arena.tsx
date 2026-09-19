@@ -7,7 +7,7 @@ import { useFrame } from '@react-three/fiber'
 import { useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import { BOSS_X, BOSS_Y, PLAYER_MAX_X, PLAYER_MIN_X } from '../../game/constants'
-import { getWorld } from '../../game/store'
+import { getWorld, useWorld } from '../../game/store'
 
 const CYAN = '#00f0ff'
 const MAGENTA = '#ff2bd6'
@@ -36,6 +36,8 @@ function BossLight() {
 const lineMat = (c: string) => new THREE.MeshBasicMaterial({ color: c, toneMapped: false })
 
 function Boundaries() {
+  const phase = useWorld((w) => w.phase)
+  const hidden = phase === 'PODIUM' || phase === 'RESULTS'
   const mats = useMemo(
     () => ({
       cyan: lineMat(CYAN),
@@ -56,6 +58,7 @@ function Boundaries() {
     [],
   )
   const xMin = PLAYER_MIN_X - 0.6
+  if (hidden) return null
   return (
     <group>
       <mesh geometry={geos.side} material={mats.cyan} position={[xMin, 0.03, 0]} />
