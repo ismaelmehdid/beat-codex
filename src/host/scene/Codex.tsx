@@ -9,7 +9,8 @@ import { useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import { BOSS_CORE_SIZE, BOSS_X, BOSS_Y, BOSS_Z, PLAYER_HEIGHT } from '../../game/constants'
 import { getWorld } from '../../game/store'
-import { CODEX_RED } from '../../lib/colors'
+import { CODEX_ACCENT, CODEX_BLUE, CODEX_BLUE_LIGHT, LOGO_CODEX } from '../../lib/colors'
+import { getLogoTexture } from './logoTexture'
 import { explosionPieces, makePiece, spawnDebris, type DebrisPiece } from './Debris'
 import { flashes, particles, rings } from './particles'
 
@@ -74,9 +75,9 @@ const CRACKS_25: { pos: V3; rot: V3; len: number }[] = [
 ]
 
 const WHITE = new THREE.Color('#ffffff')
-const RED = new THREE.Color(CODEX_RED)
-const PLATE_EMISSIVE = new THREE.Color('#2a0006')
-const HIT_FLASH = new THREE.Color('#8a1a14')
+const RED = new THREE.Color(CODEX_ACCENT)
+const PLATE_EMISSIVE = new THREE.Color('#070a2e')
+const HIT_FLASH = new THREE.Color('#2d4ea8')
 const _v = new THREE.Vector3()
 const _q = new THREE.Quaternion()
 const _e = new THREE.Euler()
@@ -109,20 +110,29 @@ export default function Codex() {
   const mats = useMemo(
     () => ({
       plate: new THREE.MeshStandardMaterial({
-        color: '#0b0b16',
+        color: '#0a0b1c',
         metalness: 0.85,
         roughness: 0.28,
         emissive: PLATE_EMISSIVE.clone(),
         emissiveIntensity: 0.6,
       }),
-      inner: new THREE.MeshStandardMaterial({ color: '#3a0008', emissive: CODEX_RED, emissiveIntensity: 1.6, roughness: 0.4 }),
-      edge: new THREE.LineBasicMaterial({ color: '#ff3a3a', toneMapped: false }),
-      eye: new THREE.MeshStandardMaterial({ color: '#ff1010', emissive: CODEX_RED, emissiveIntensity: 1.8, roughness: 0.25 }),
-      eyeRing: new THREE.MeshStandardMaterial({ color: '#2a0000', emissive: CODEX_RED, emissiveIntensity: 1.3, roughness: 0.3, metalness: 0.5 }),
-      pupil: new THREE.MeshBasicMaterial({ color: '#050005' }),
-      sat: new THREE.MeshStandardMaterial({ color: '#150005', emissive: CODEX_RED, emissiveIntensity: 0.9, metalness: 0.6, roughness: 0.35 }),
-      frag: new THREE.MeshBasicMaterial({ color: '#ff3a3a', wireframe: true, transparent: true, opacity: 0.6, toneMapped: false }),
-      crack: new THREE.MeshBasicMaterial({ color: '#ff7a4a', toneMapped: false }),
+      inner: new THREE.MeshStandardMaterial({ color: '#12184f', emissive: CODEX_BLUE, emissiveIntensity: 1.6, roughness: 0.4 }),
+      edge: new THREE.LineBasicMaterial({ color: CODEX_BLUE_LIGHT, toneMapped: false }),
+      eye: new THREE.MeshStandardMaterial({ color: CODEX_BLUE, emissive: CODEX_BLUE, emissiveIntensity: 2.1, roughness: 0.25 }),
+      eyeRing: new THREE.MeshStandardMaterial({ color: '#0d1140', emissive: CODEX_BLUE_LIGHT, emissiveIntensity: 1.3, roughness: 0.3, metalness: 0.5 }),
+      pupil: new THREE.MeshBasicMaterial({ color: '#03040f' }),
+      sat: new THREE.MeshStandardMaterial({ color: '#0b0f38', emissive: CODEX_BLUE, emissiveIntensity: 0.9, metalness: 0.6, roughness: 0.35 }),
+      frag: new THREE.MeshBasicMaterial({ color: CODEX_BLUE_LIGHT, wireframe: true, transparent: true, opacity: 0.6, toneMapped: false }),
+      crack: new THREE.MeshBasicMaterial({ color: '#c9d4ff', toneMapped: false }),
+      // A sprite, not a decal: the camera sees the -X face almost edge-on, so anything flat
+      // mounted there foreshortens to a line. This always faces the audience.
+      logo: new THREE.SpriteMaterial({
+        map: getLogoTexture(LOGO_CODEX),
+        transparent: true,
+        opacity: 0.95,
+        depthWrite: false,
+        toneMapped: false,
+      }),
     }),
     [],
   )
@@ -172,7 +182,7 @@ export default function Codex() {
       sats.visible = true
       ey.position.set(EYE_LOCAL[0], EYE_LOCAL[1], EYE_LOCAL[2])
       ey.rotation.set(0, 0, 0)
-      mats.eye.color.set('#ff1010')
+      mats.eye.color.set(CODEX_BLUE)
       mats.eyeRing.emissiveIntensity = 1.3
       for (const f of fragRefs.current) if (f) f.visible = true
     }
@@ -293,7 +303,7 @@ export default function Codex() {
             (Math.random() - 0.5) * 3,
             0.35 + Math.random() * 0.4,
             0.08 + Math.random() * 0.08,
-            Math.random() < 0.7 ? CODEX_RED : '#ffb070',
+            Math.random() < 0.7 ? CODEX_ACCENT : CODEX_BLUE_LIGHT,
             14,
             1.5,
             false,
@@ -319,7 +329,7 @@ export default function Codex() {
         eyeScale = 1.2 + Math.sin(td * 20) * 0.1
         satSpeedMul = 3 + k * 3
         if (td >= a.nextRingAt) {
-          rings.spawn(BOSS_X - HALF - 0.5, BOSS_Y, BOSS_Z, 1.5, 9 + k * 4, 600, on ? '#ffffff' : CODEX_RED, { facing: true })
+          rings.spawn(BOSS_X - HALF - 0.5, BOSS_Y, BOSS_Z, 1.5, 9 + k * 4, 600, on ? '#ffffff' : CODEX_ACCENT, { facing: true })
           a.nextRingAt = td + 0.22
         }
       } else {
@@ -365,7 +375,7 @@ export default function Codex() {
           eyeIntensity = 2.5 * dark
           eyeScale = 1
           mats.eyeRing.emissiveIntensity = 1.3 * dark
-          mats.eye.color.setRGB(0.1 + 0.9 * dark, 0.06 * dark, 0.06 * dark)
+          mats.eye.color.setRGB(0.1 * dark, 0.12 * dark, 0.25 + 0.75 * dark)
         }
       }
     }
@@ -380,7 +390,7 @@ export default function Codex() {
     // ---- cracks ----
     if (cracks50.current) cracks50.current.visible = hpFrac < 0.5 && !dying
     if (cracks25.current) cracks25.current.visible = hpFrac < 0.25 && !dying
-    mats.crack.color.setRGB(1.6, 0.5 + Math.sin(t * 9) * 0.25, 0.3)
+    mats.crack.color.setRGB(0.75, 0.82 + Math.sin(t * 9) * 0.12, 1.6)
 
     // ---- satellites ----
     if (sats.visible) {
@@ -428,6 +438,8 @@ export default function Codex() {
           />
         ))}
         <lineSegments geometry={geos.edges} material={mats.edge} />
+        {/* Codex mark hovering off the face the audience actually sees */}
+        <sprite material={mats.logo} position={[-0.6, 0.6, HALF + 0.4]} scale={[3.2, 3.2, 1]} />
         <group ref={cracks50} visible={false}>
           {CRACKS_50.map((c, i) => (
             <mesh key={i} geometry={geos.crack} material={mats.crack} position={c.pos} rotation={c.rot} scale={[1, c.len, 1]} />
@@ -512,11 +524,11 @@ function detachSatellites(sats: (THREE.Mesh | null)[]): void {
         vel: [(dx / len) * s, (dy / len) * s + 4, (dz / len) * s],
         size: SAT_SIZE,
         color: '#150005',
-        emissive: CODEX_RED,
+        emissive: CODEX_ACCENT,
         emissiveIntensity: 0.9,
       }),
     )
-    particles.burst(_v.x, _v.y, _v.z, 8, CODEX_RED, { speed: 4, life: 0.5, size: 0.12, gravity: 8 })
+    particles.burst(_v.x, _v.y, _v.z, 8, CODEX_ACCENT, { speed: 4, life: 0.5, size: 0.12, gravity: 8 })
   }
   spawnDebris(pieces, 6000)
 }
@@ -541,7 +553,7 @@ function burstCore(plates: (THREE.Mesh | null)[]): void {
         ang: [(Math.random() - 0.5) * 6, (Math.random() - 0.5) * 6, (Math.random() - 0.5) * 6],
         size: [PLATE * scl, PLATE * scl, PLATE_T],
         color: '#0b0b16',
-        emissive: CODEX_RED,
+        emissive: CODEX_ACCENT,
         emissiveIntensity: 0.5,
       }),
     )
@@ -554,17 +566,17 @@ function burstCore(plates: (THREE.Mesh | null)[]): void {
       spread: 1.4,
       sizeMin: 0.35,
       sizeMax: 0.95,
-      emissive: CODEX_RED,
+      emissive: CODEX_ACCENT,
       emissiveIntensity: 0.9,
     }),
   )
   spawnDebris(pieces, 6000)
 
   flashes.spawn(BOSS_X, BOSS_Y, BOSS_Z, 3, 20, 750, '#ffd8c8', 1.6)
-  flashes.spawn(BOSS_X, BOSS_Y, BOSS_Z, 1, 10, 450, CODEX_RED, 1.4)
-  rings.spawn(BOSS_X, 0.05, BOSS_Z, 2, 22, 1000, CODEX_RED, { brightness: 1.6 })
+  flashes.spawn(BOSS_X, BOSS_Y, BOSS_Z, 1, 10, 450, CODEX_ACCENT, 1.4)
+  rings.spawn(BOSS_X, 0.05, BOSS_Z, 2, 22, 1000, CODEX_ACCENT, { brightness: 1.6 })
   rings.spawn(BOSS_X - HALF, BOSS_Y, BOSS_Z, 2, 18, 800, '#ffffff', { facing: true })
-  particles.burst(BOSS_X, BOSS_Y, BOSS_Z, 260, CODEX_RED, { speed: 16, life: 1.8, size: 0.26, gravity: 14, drag: 0.7 })
-  particles.burst(BOSS_X, BOSS_Y, BOSS_Z, 120, '#ffb070', { speed: 12, life: 1.4, size: 0.2, gravity: 14, drag: 0.7 })
+  particles.burst(BOSS_X, BOSS_Y, BOSS_Z, 260, CODEX_ACCENT, { speed: 16, life: 1.8, size: 0.26, gravity: 14, drag: 0.7 })
+  particles.burst(BOSS_X, BOSS_Y, BOSS_Z, 120, CODEX_BLUE_LIGHT, { speed: 12, life: 1.4, size: 0.2, gravity: 14, drag: 0.7 })
   particles.burst(BOSS_X, BOSS_Y, BOSS_Z, 80, '#ffffff', { speed: 20, life: 0.9, size: 0.14, gravity: 6, drag: 0.5 })
 }

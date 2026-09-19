@@ -475,8 +475,21 @@
 }
 
 .ph-headline--lose {
-  color: var(--neon-red);
-  text-shadow: 0 0 14px rgba(255, 42, 42, 0.9), 0 0 44px rgba(255, 42, 42, 0.45);
+  color: var(--codex-blue-light);
+  text-shadow: 0 0 14px rgba(117, 150, 255, 0.9), 0 0 44px rgba(63, 75, 255, 0.5);
+}
+
+.ph-brand {
+  display: block;
+  width: clamp(44px, 14vw, 72px);
+  height: auto;
+  margin: 0 auto 10px;
+  filter: drop-shadow(0 0 12px rgba(217, 119, 87, 0.7));
+}
+
+.ph-brand--small {
+  width: clamp(28px, 8vw, 40px);
+  margin-bottom: 6px;
 }
 
 .ph-rank {

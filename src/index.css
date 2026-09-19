@@ -7,6 +7,11 @@
   --neon-yellow: #ffe600;
   --neon-green: #39ff14;
   --neon-red: #ff2a2a;
+  /* Brand */
+  --claude-orange: #d97757;
+  --codex-blue: #3f4bff;
+  --codex-blue-mid: #7596ff;
+  --codex-blue-light: #ada6ff;
   --text: #f4f6ff;
   --muted: #8b90b8;
   --font-display: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;

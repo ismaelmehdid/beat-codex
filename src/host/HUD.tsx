@@ -1,6 +1,7 @@
 import type { ReactElement } from 'react'
 import { allPlayers } from '../game/engine'
 import { getWorld, useHostStore, useWorld } from '../game/store'
+import { LOGO_CODEX } from '../lib/colors'
 import './host.css'
 
 const HP_BLOCKS = 40
@@ -19,7 +20,10 @@ function BossBar() {
   }
   return (
     <div className="hud-boss">
-      <div className="hud-boss-name">CODEX</div>
+      <div className="hud-boss-name">
+        <img className="brand-mark" src={LOGO_CODEX} alt="" aria-hidden />
+        CODEX
+      </div>
       <div className="hud-hp">
         {/* slow "damage lag" ghost bar behind the instant segmented bar */}
         <div className="hud-hp-ghost" style={{ width: `${ratio * 100}%` }} />

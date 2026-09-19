@@ -2,6 +2,7 @@ import { resetToLobby } from '../game/engine'
 import { bumpWorld, getWorld, useWorld } from '../game/store'
 import type { RankedPlayer } from '../lib/protocol'
 import './host.css'
+import { LOGO_CLAUDE, LOGO_CODEX } from '../lib/colors'
 
 const MEDALS = ['\u{1F947}', '\u{1F948}', '\u{1F949}']
 const TWO_COLUMN_THRESHOLD = 10
@@ -43,6 +44,7 @@ export default function Results() {
     <div className="results">
       <div className="results-panel">
         <div className={`results-title ${result === 'VICTORY' ? 'victory' : 'defeat'}`}>
+          <img className="brand-mark" src={result === 'DEFEAT' ? LOGO_CODEX : LOGO_CLAUDE} alt="" aria-hidden />
           {result === 'VICTORY' ? 'CODEX DEFEATED' : result === 'DEFEAT' ? 'CODEX WINS' : 'RESULTS'}
         </div>
 

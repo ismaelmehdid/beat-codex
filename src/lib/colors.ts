@@ -1,4 +1,18 @@
-/** Bright, distinct neon colors for fighters. Index wraps. */
+/** Claude brand orange: the body color every hacker wears. */
+export const CLAUDE_ORANGE = '#D97757'
+export const CLAUDE_ORANGE_DEEP = '#B85C3F'
+
+/** Codex brand blues: base body, mid highlight, light glow. */
+export const CODEX_BLUE = '#3F4BFF'
+export const CODEX_BLUE_MID = '#7596FF'
+export const CODEX_BLUE_LIGHT = '#ADA6FF'
+/** The boss accent used by scene FX, projectiles and HUD. */
+export const CODEX_ACCENT = CODEX_BLUE_MID
+
+/**
+ * Per-player accent colors. Fighters share the Claude orange body, so these drive the parts that
+ * have to stay legible in a crowd of 20: visor, boots, antenna, ground ring, name label, fireballs.
+ */
 export const PLAYER_COLORS = [
   '#00f0ff', // cyan
   '#ff2bd6', // magenta
@@ -26,5 +40,7 @@ export function colorForIndex(i: number): string {
   return PLAYER_COLORS[((i % PLAYER_COLORS.length) + PLAYER_COLORS.length) % PLAYER_COLORS.length]
 }
 
-export const CODEX_RED = '#ff2a2a'
 export const FIREBALL_ORANGE = '#ffa726'
+
+export const LOGO_CLAUDE = '/logos/claude.png'
+export const LOGO_CODEX = '/logos/codex.png'

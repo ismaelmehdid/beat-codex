@@ -10,6 +10,7 @@ import PodiumConfetti from './PodiumConfetti'
 import { PodiumCrown, PodiumHalo, PodiumWinnerRings } from './PodiumCrown'
 import TextSprite from './TextSprite'
 import VoxelFighter from './VoxelFighter'
+import { CODEX_ACCENT, CODEX_BLUE_LIGHT } from '../../lib/colors'
 import {
   BLOCK_RISE_S,
   BLOCK_SIZE,
@@ -30,7 +31,7 @@ import {
 } from './podiumTiming'
 
 const VICTORY_ACCENT = '#00f0ff'
-const DEFEAT_ACCENT = '#ff2a2a'
+const DEFEAT_ACCENT = CODEX_ACCENT
 const CONE_APEX_Y = 9.5
 
 /**
@@ -387,7 +388,7 @@ function ResultLabel({ result, empty }: { result: GameResult | null; empty: bool
   return (
     <group ref={ref} position={[0, 6.6, 0]} visible={false}>
       {defeat ? (
-        <TextSprite text="CODEX WINS" color="#ff2a2a" outline="#3a0008" height={0.9} />
+        <TextSprite text="CODEX WINS" color={CODEX_BLUE_LIGHT} outline="#0a1040" height={0.9} />
       ) : (
         <TextSprite text="YOU BEAT CODEX!" color="#ffd23f" outline="#00a8b8" height={0.9} />
       )}

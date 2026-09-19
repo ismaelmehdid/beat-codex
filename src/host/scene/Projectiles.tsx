@@ -8,6 +8,7 @@ import { useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import { BOSS_PROJECTILE_RADIUS, FIREBALL_RADIUS } from '../../game/constants'
 import { getWorld } from '../../game/store'
+import { CODEX_ACCENT, CODEX_BLUE_LIGHT } from '../../lib/colors'
 
 const FIRE_POOL = 512
 const TRAIL_PER_FIREBALL = 2
@@ -58,16 +59,16 @@ export default function Projectiles() {
         depthWrite: false,
         toneMapped: false,
       }),
-      orb: new THREE.MeshStandardMaterial({ color: '#3a0008', emissive: '#ff2a2a', emissiveIntensity: 1.6, roughness: 0.3 }),
+      orb: new THREE.MeshStandardMaterial({ color: '#141a55', emissive: CODEX_ACCENT, emissiveIntensity: 1.6, roughness: 0.3 }),
       orbGlow: new THREE.MeshBasicMaterial({
-        color: '#ff2a2a',
+        color: CODEX_ACCENT,
         transparent: true,
         opacity: 0.28,
         blending: THREE.AdditiveBlending,
         depthWrite: false,
         toneMapped: false,
       }),
-      orbInner: new THREE.MeshBasicMaterial({ color: '#ffb070', wireframe: true, toneMapped: false }),
+      orbInner: new THREE.MeshBasicMaterial({ color: CODEX_BLUE_LIGHT, wireframe: true, toneMapped: false }),
     }),
     [],
   )

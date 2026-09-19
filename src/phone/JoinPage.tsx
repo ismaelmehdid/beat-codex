@@ -5,6 +5,7 @@
 import { useState, type CSSProperties, type FormEvent, type ReactNode } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import type { RankedPlayer } from '../lib/protocol'
+import { LOGO_CLAUDE } from '../lib/colors'
 import { getOrCreatePlayerId, getStoredName, MAX_NAME_LENGTH, storeName, validateName } from '../lib/playerIdentity'
 import { isValidRoomId } from '../lib/roomId'
 import { supabase } from '../lib/supabase'
@@ -56,6 +57,7 @@ function Dot({ status, label }: { status: ChannelStatus; label?: boolean }) {
 function MessageScreen({ children }: { children: ReactNode }) {
   return (
     <div className="ph ph--center" onContextMenu={prevent}>
+      <img className="ph-brand ph-brand--small" src={LOGO_CLAUDE} alt="" aria-hidden />
       <h1 className="ph-title ph-title--small">BEAT CODEX</h1>
       <p className="ph-msg">{children}</p>
     </div>
@@ -79,6 +81,7 @@ function NameEntry({ roomId, onJoin }: { roomId: string; onJoin: (name: string) 
 
   return (
     <div className="ph ph--center" onContextMenu={prevent}>
+      <img className="ph-brand" src={LOGO_CLAUDE} alt="" aria-hidden />
       <h1 className="ph-title">BEAT CODEX</h1>
       <p className="ph-sub">ENTER YOUR FIGHTER NAME</p>
       <form className="ph-form" onSubmit={submit}>
@@ -127,6 +130,7 @@ function WaitingScreen({
   return (
     <div className="ph ph--center" onContextMenu={prevent}>
       <Dot status={status} label />
+      <img className="ph-brand" src={LOGO_CLAUDE} alt="" aria-hidden />
       <p className="ph-in">YOU'RE IN</p>
       <h1 className="ph-bigname" style={nameStyle(color)}>
         {name}
@@ -160,7 +164,8 @@ function ResultScreen({
     return (
       <div className="ph ph--center" onContextMenu={prevent}>
         <Dot status={status} label />
-        <h1 className="ph-title ph-title--small">BEAT CODEX</h1>
+        <img className="ph-brand ph-brand--small" src={LOGO_CLAUDE} alt="" aria-hidden />
+      <h1 className="ph-title ph-title--small">BEAT CODEX</h1>
         <p className="ph-headline ph-headline--lose">GAME OVER</p>
         <p className="ph-sub ph-pulse">waiting for results...</p>
         <div className="ph-bottom">
@@ -177,6 +182,7 @@ function ResultScreen({
   return (
     <div className="ph ph--center" onContextMenu={prevent}>
       <Dot status={status} label />
+      <img className="ph-brand ph-brand--small" src={LOGO_CLAUDE} alt="" aria-hidden />
       <h1 className="ph-title ph-title--small">BEAT CODEX</h1>
       <p className={`ph-headline ${win ? 'ph-headline--win' : 'ph-headline--lose'}`}>
         {win ? 'YOU BEAT CODEX! 🎉' : 'CODEX WINS'}

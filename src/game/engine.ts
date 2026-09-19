@@ -2,7 +2,7 @@
  * Authoritative game simulation. Pure-ish: mutates the GameState passed in, no React, no network.
  * All times are host clock ms (performance.now()). The host loop calls `step` every frame.
  */
-import { colorForIndex, CODEX_RED, FIREBALL_ORANGE } from '../lib/colors'
+import { colorForIndex, CODEX_ACCENT, FIREBALL_ORANGE } from '../lib/colors'
 import * as C from './constants'
 import { rankPlayers } from './ranking'
 import type { Boss, FxEvent, FxType, GameResult, GameState, Phase, Player, Projectile } from './types'
@@ -425,16 +425,16 @@ function bossAttack(state: GameState): void {
     radius: C.BOSS_PROJECTILE_RADIUS,
     damage: C.BOSS_PROJECTILE_DAMAGE,
     bornAt: now,
-    color: CODEX_RED,
+    color: CODEX_ACCENT,
   })
   state.boss.lastAttackAt = now
   state.boss.nextAttackAt = now + state.boss.attackIntervalMs
-  pushFx(state, 'boss_fire', sx, sy, sz, { color: CODEX_RED, playerId: target.id })
+  pushFx(state, 'boss_fire', sx, sy, sz, { color: CODEX_ACCENT, playerId: target.id })
   addShake(state, 0.05)
 }
 
 function explodeBossProjectile(state: GameState, pr: Projectile): void {
-  pushFx(state, 'boss_impact', pr.x, Math.max(0.2, pr.y), pr.z, { color: CODEX_RED })
+  pushFx(state, 'boss_impact', pr.x, Math.max(0.2, pr.y), pr.z, { color: CODEX_ACCENT })
   addShake(state, 0.15)
   // Splash: anyone standing close takes the hit.
   for (const p of connectedPlayers(state)) {

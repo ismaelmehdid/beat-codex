@@ -8,7 +8,7 @@ import * as THREE from 'three'
 import { BOSS_CORE_SIZE } from '../../game/constants'
 import { getWorld } from '../../game/store'
 import type { FxEvent } from '../../game/types'
-import { CODEX_RED, FIREBALL_ORANGE } from '../../lib/colors'
+import { CODEX_ACCENT, FIREBALL_ORANGE } from '../../lib/colors'
 import { DebrisLayer, explosionPieces, spawnDebris } from './Debris'
 import { FLASH_CAPACITY, PARTICLE_CAPACITY, RING_CAPACITY, flashes, particles, rings } from './particles'
 import { getTextTexture } from './TextSprite'
@@ -175,14 +175,14 @@ function handleFx(f: FxEvent): void {
       break
     }
     case 'boss_fire': {
-      flashes.spawn(f.x - 0.5, f.y, f.z, 0.6, 2.6, 260, CODEX_RED, 1.4)
-      particles.burst(f.x, f.y, f.z, 14, CODEX_RED, { speed: 5, life: 0.4, size: 0.16, gravity: 2, drag: 2, bias: [-4, 0, 0] })
+      flashes.spawn(f.x - 0.5, f.y, f.z, 0.6, 2.6, 260, CODEX_ACCENT, 1.4)
+      particles.burst(f.x, f.y, f.z, 14, CODEX_ACCENT, { speed: 5, life: 0.4, size: 0.16, gravity: 2, drag: 2, bias: [-4, 0, 0] })
       break
     }
     case 'boss_impact': {
       rings.spawn(f.x, 0.05, f.z, 0.3, 3.2, 450, '#ff5a2a', { brightness: 1.5 })
       flashes.spawn(f.x, Math.max(0.5, f.y), f.z, 0.4, 2.2, 230, '#ff7a30', 1.4)
-      particles.burst(f.x, Math.max(0.3, f.y), f.z, 32, Math.random() < 0.5 ? CODEX_RED : '#ff8a3a', {
+      particles.burst(f.x, Math.max(0.3, f.y), f.z, 32, Math.random() < 0.5 ? CODEX_ACCENT : '#ff8a3a', {
         speed: 8,
         life: 0.75,
         size: 0.19,
@@ -193,8 +193,8 @@ function handleFx(f: FxEvent): void {
       break
     }
     case 'player_hit': {
-      particles.burst(f.x, f.y, f.z, 9, Math.random() < 0.5 ? CODEX_RED : WHITE, { speed: 5, life: 0.4, size: 0.12, gravity: 15, drag: 1.5 })
-      flashes.spawn(f.x, f.y, f.z, 0.3, 1.1, 150, CODEX_RED, 1.1)
+      particles.burst(f.x, f.y, f.z, 9, Math.random() < 0.5 ? CODEX_ACCENT : WHITE, { speed: 5, life: 0.4, size: 0.12, gravity: 15, drag: 1.5 })
+      flashes.spawn(f.x, f.y, f.z, 0.3, 1.1, 150, CODEX_ACCENT, 1.1)
       break
     }
     case 'player_death': {
@@ -214,10 +214,10 @@ function handleFx(f: FxEvent): void {
     case 'boss_death': {
       const half = BOSS_CORE_SIZE / 2
       flashes.spawn(f.x, f.y, f.z, 2, 9, 500, '#ff6a4a', 1.2)
-      rings.spawn(f.x - half, f.y, f.z, 1, 12, 900, CODEX_RED, { facing: true })
+      rings.spawn(f.x - half, f.y, f.z, 1, 12, 900, CODEX_ACCENT, { facing: true })
       rings.spawn(f.x - half, f.y, f.z, 1, 16, 1100, WHITE, { facing: true, delayMs: 250 })
-      rings.spawn(f.x, 0.05, f.z, 2, 14, 1000, CODEX_RED, { delayMs: 120 })
-      particles.burst(f.x, f.y, f.z, 160, CODEX_RED, { speed: 14, life: 1.5, size: 0.25, gravity: 12, drag: 0.8 })
+      rings.spawn(f.x, 0.05, f.z, 2, 14, 1000, CODEX_ACCENT, { delayMs: 120 })
+      particles.burst(f.x, f.y, f.z, 160, CODEX_ACCENT, { speed: 14, life: 1.5, size: 0.25, gravity: 12, drag: 0.8 })
       particles.burst(f.x, f.y, f.z, 80, FIREBALL_ORANGE, { speed: 10, life: 1.2, size: 0.2, gravity: 12, drag: 0.8 })
       break
     }

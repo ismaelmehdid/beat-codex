@@ -1,6 +1,7 @@
 import { QRCodeSVG } from 'qrcode.react'
 import { connectedPlayerCount, connectedPlayers, startCountdown } from '../game/engine'
 import { bumpWorld, getWorld, useHostStore, useWorld } from '../game/store'
+import { LOGO_CLAUDE, LOGO_CODEX } from '../lib/colors'
 import { joinUrlFor } from '../lib/roomId'
 import type { NetStatus } from '../net/useHostChannel'
 import './host.css'
@@ -50,7 +51,9 @@ export default function Lobby({ roomId, netStatus }: LobbyProps) {
 
       <header className="lobby-header">
         <h1 className="lobby-title">
+          <img className="brand-mark" src={LOGO_CLAUDE} alt="" aria-hidden />
           BEAT <span className="codex">CODEX</span>
+          <img className="brand-mark brand-mark--codex" src={LOGO_CODEX} alt="" aria-hidden />
         </h1>
         <p className="lobby-subtitle">Anthropic hackers vs CODEX</p>
       </header>

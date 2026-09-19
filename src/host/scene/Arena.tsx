@@ -8,6 +8,7 @@ import { useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import { BOSS_X, BOSS_Y, PLAYER_MAX_X, PLAYER_MIN_X } from '../../game/constants'
 import { getWorld, useWorld } from '../../game/store'
+import { CODEX_ACCENT, CODEX_BLUE } from '../../lib/colors'
 
 const CYAN = '#00f0ff'
 const MAGENTA = '#ff2bd6'
@@ -30,7 +31,7 @@ function BossLight() {
     l.intensity = (90 + Math.sin(t * 3.1) * 30 + hit) * dead
     l.position.set(BOSS_X - 5, BOSS_Y + 2 + Math.sin(t * 1.1) * 0.3, 4)
   })
-  return <pointLight ref={ref} color="#ff2a2a" intensity={90} distance={48} decay={2} />
+  return <pointLight ref={ref} color={CODEX_BLUE} intensity={70} distance={48} decay={2} />
 }
 
 const lineMat = (c: string) => new THREE.MeshBasicMaterial({ color: c, toneMapped: false })
@@ -42,7 +43,7 @@ function Boundaries() {
     () => ({
       cyan: lineMat(CYAN),
       magenta: lineMat(MAGENTA),
-      red: lineMat('#7a1424'),
+      red: lineMat('#2a3480'),
       dim: new THREE.MeshBasicMaterial({ color: '#0d3a40', toneMapped: false }),
     }),
     [],
