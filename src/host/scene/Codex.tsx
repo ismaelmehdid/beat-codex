@@ -171,6 +171,8 @@ export default function Codex() {
       sats.visible = true
       ey.position.set(EYE_LOCAL[0], EYE_LOCAL[1], EYE_LOCAL[2])
       ey.rotation.set(0, 0, 0)
+      mats.eye.color.set('#ff1010')
+      mats.eyeRing.emissiveIntensity = 1.3
       for (const f of fragRefs.current) if (f) f.visible = true
     }
 

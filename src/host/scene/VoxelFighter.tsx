@@ -13,13 +13,20 @@ export interface VoxelFighterProps {
   glow?: number
   /** freeze animation */
   frozen?: boolean
+  /** 0..1 hit flash read every frame: 1 = whitened/brightened (optional, additive) */
+  flashRef?: MutableRefObject<number>
+  /** 0..1 brightness multiplier read every frame: 1 = normal, ~0.35 = disconnected (optional, additive) */
+  dimRef?: MutableRefObject<number>
 }
 
 /**
  * Procedural voxel fighter (Anthropic hacker). Pure geometry: head + visor, torso, arms, legs.
  * Origin is at the feet (y = 0). Faces +X by default; the parent group handles facing/position.
  */
-export default function VoxelFighter({ color, walkRef, scale = 1, glow = 0.55, frozen = false }: VoxelFighterProps) {
+const WHITE = new THREE.Color('#ffffff')
+const DARK = new THREE.Color('#12131f')
+
+export default function VoxelFighter({ color, walkRef, scale = 1, glow = 0.55, frozen = false, flashRef, dimRef }: VoxelFighterProps) {
   const leftLeg = useRef<THREE.Mesh>(null)
   const rightLeg = useRef<THREE.Mesh>(null)
   const leftArm = useRef<THREE.Mesh>(null)
@@ -37,7 +44,22 @@ export default function VoxelFighter({ color, walkRef, scale = 1, glow = 0.55, f
     [],
   )
 
+  const baseColor = useMemo(() => new THREE.Color(color), [color])
+  const lastFx = useRef({ flash: -1, dim: -1 })
+
   useFrame(({ clock }) => {
+    // Optional per-frame hit flash / dimming (only touches materials when the values change).
+    const flash = flashRef?.current ?? 0
+    const dim = dimRef?.current ?? 1
+    if (flash !== lastFx.current.flash || dim !== lastFx.current.dim) {
+      lastFx.current.flash = flash
+      lastFx.current.dim = dim
+      mainMat.color.copy(baseColor).lerp(WHITE, flash).multiplyScalar(dim)
+      mainMat.emissive.copy(baseColor).lerp(WHITE, flash)
+      mainMat.emissiveIntensity = (glow + flash * 2.5) * dim
+      darkMat.color.copy(DARK).lerp(WHITE, flash * 0.85).multiplyScalar(dim)
+      visorMat.emissiveIntensity = (1.6 + flash) * dim
+    }
     if (frozen) return
     const t = clock.elapsedTime + t0
     const walk = walkRef?.current ?? 0

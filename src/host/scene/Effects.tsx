@@ -141,14 +141,14 @@ class DamageNumberPool {
   }
 }
 
+const poolRef: { current: DamageNumberPool | null } = { current: null }
+
 function DamageNumbers() {
   const pool = useMemo(() => new DamageNumberPool(), [])
   poolRef.current = pool
   useFrame(() => pool.update(performance.now()))
   return <primitive object={pool.group} />
 }
-
-const poolRef: { current: DamageNumberPool | null } = { current: null }
 
 // ------------------------------------------------------------------------------------------------
 // FX dispatcher
