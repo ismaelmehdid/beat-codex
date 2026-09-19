@@ -22,6 +22,10 @@ npm run dev        # serves on your LAN (--host) so phones can reach it
 
 Supabase: any project works, no tables needed. Realtime must be enabled (it is by default). Broadcast/presence use a public channel `raid:<ROOM>`.
 
+### Required before a big demo
+
+Raise **Max events per second** in Project Settings -> Realtime. Every broadcast counts once per subscriber, so one phone input in a room of 20 costs 21 events. The free default of 100/s is exceeded from roughly 6 active phones, and the server then closes the channel mid-fight. The host prints a clear console error if that happens. The phones already throttle themselves: the host advertises a minimum input interval that grows with the room size.
+
 ## Run the demo
 
 1. Open `http://<laptop-ip>:5173/host` on the projector (full screen).
@@ -56,10 +60,13 @@ Both write screenshots to `test-results/` and exit non-zero on page errors or fa
 
 ## Tuning
 
-`src/game/constants.ts`: boss HP scaling (`BOSS_BASE_HP + players * BOSS_HP_PER_PLAYER`), team lives (`max(5, players*3)`), damage, cooldowns, attack interval, phase durations.
+`src/game/constants.ts`: boss HP scaling (`BOSS_BASE_HP + players * BOSS_HP_PER_PLAYER`), team lives (`max(8, players*3)`), damage, cooldowns, phase durations. CODEX's attack cadence scales with the crowd via `bossAttackIntervalFor` (2.4s for a tiny squad down to 0.9s at 17+), because the boss targets one living player at a time and a small group would otherwise be focused down.
+
+Brand colors live in `src/lib/colors.ts`: fighters wear Claude orange with a per-player accent, CODEX and everything it owns use the Codex blues. Logos are in `public/logos/`.
 
 ## Networking notes
 
-- Presence: join/leave + name only. Broadcast: `INPUT` (phone → host, full state, coalesced, heartbeat while held), `PHASE`/`SNAPSHOT`/`PLAYER_STATE`/`GAME_OVER`/`RESET`/`WELCOME` (host → phones). Positions and physics are never sent.
-- The host clears a player's movement if no input update arrives for 1.2s, and on presence leave.
-- Free-tier Supabase allows ~100 realtime messages/s per project; phones coalesce inputs to stay well below that with ~20 players.
+- Presence: join/leave + name only, bound to `sync` only (the `join`/`leave` callbacks fire before the state is committed). Broadcast: `INPUT` (phone → host, full state, coalesced, heartbeat while held), `PHASE`/`SNAPSHOT`/`PLAYER_STATE`/`GAME_OVER`/`RESET`/`WELCOME` (host → phones). Positions and physics are never sent.
+- The host clears a player's movement if no input update arrives for 2.4s, and on presence leave.
+- A movement release is sent immediately plus a duplicate; a fire release is coalesced, since the worst case is one extra shot bounded by the cooldown.
+- Socket heartbeat is 5s and the phone flags the connection when the host goes silent for 4s, so a dead Wi-Fi path surfaces in ~10s rather than ~50s.
