@@ -1,40 +1,79 @@
 /**
- * Fixed cinematic side camera. Fight framing fits the whole player zone + boss for the current
- * aspect; podium framing for PODIUM/RESULTS. Smooth lerp between rigs, screen shake from
- * world.shake, and a slow dolly-in toward CODEX during VICTORY.
+ * Fixed cinematic camera. The fight rig sits behind and to the side of the squad, looking down
+ * the lane at CODEX: the audience sees the fighters' backs, CODEX looms ahead, and the strafe
+ * axis (Z) reads across the screen. Podium framing is a separate head-on rig.
+ *
+ * The fight distance is solved exactly: every corner of the must-fit box is projected against the
+ * frustum, so the whole arena stays in frame at any window aspect without hand-tuned numbers.
  */
 import { useFrame } from '@react-three/fiber'
 import { useRef } from 'react'
 import * as THREE from 'three'
-import { BOSS_X, BOSS_Y, PLAYER_MIN_X, VICTORY_DURATION_MS } from '../../game/constants'
+import {
+  BOSS_X,
+  BOSS_Y,
+  PLAYER_LINE_X,
+  PLAYER_MAX_Z,
+  PLAYER_MIN_Z,
+  VICTORY_DURATION_MS,
+} from '../../game/constants'
 import { getWorld } from '../../game/store'
 
 const FOV = 50
-const LEFT = PLAYER_MIN_X - 1.2
-const RIGHT = BOSS_X + 5.6 // satellites orbit past the core
-const TOP = 9.8
-const BOTTOM = -0.6
+/** Swing away from straight-behind, toward +Z. Keeps it a three-quarter view, not a flat rail shot. */
+const YAW = THREE.MathUtils.degToRad(22)
+/** Camera elevation above the look target. */
+const PITCH = THREE.MathUtils.degToRad(13)
+/** Breathing room around the must-fit box. */
+const MARGIN = 1.04
+
+/** Everything that must stay on screen during a fight. */
+const FIT_MIN = new THREE.Vector3(PLAYER_LINE_X - 2, 0, PLAYER_MIN_Z - 1.8)
+const FIT_MAX = new THREE.Vector3(BOSS_X + 4.5, 9.7, PLAYER_MAX_Z + 1.8)
+const FIGHT_LOOK = new THREE.Vector3(1.5, 3.3, 0)
 
 const PODIUM_POS = new THREE.Vector3(0, 4.5, 15)
 const PODIUM_LOOK = new THREE.Vector3(0, 2.5, 0)
-const VICTORY_POS = new THREE.Vector3(BOSS_X - 9, 6.5, 15)
-const VICTORY_LOOK = new THREE.Vector3(BOSS_X - 1, BOSS_Y - 1, 0)
-const DEFEAT_LOOK = new THREE.Vector3(BOSS_X - 4, BOSS_Y - 1, 0)
+const VICTORY_LOOK = new THREE.Vector3(BOSS_X - 1, BOSS_Y - 0.5, 0)
+const DEFEAT_LOOK = new THREE.Vector3(BOSS_X - 3, BOSS_Y - 1.5, 0)
 
 const _goalPos = new THREE.Vector3()
 const _goalLook = new THREE.Vector3()
 const _fightPos = new THREE.Vector3()
-const _fightLook = new THREE.Vector3()
+const _victoryPos = new THREE.Vector3()
+const _offset = new THREE.Vector3()
+const _fwd = new THREE.Vector3()
+const _right = new THREE.Vector3()
+const _up = new THREE.Vector3()
+const _corner = new THREE.Vector3()
 
-function fightFraming(aspect: number, pos: THREE.Vector3, look: THREE.Vector3): void {
-  const tanHalf = Math.tan((FOV * Math.PI) / 360)
-  const cx = (LEFT + RIGHT) / 2
-  const cy = (TOP + BOTTOM) / 2
-  const halfW = ((RIGHT - LEFT) / 2) * 1.03
-  const halfH = ((TOP - BOTTOM) / 2) * 1.08
-  const d = Math.max(halfW / (tanHalf * Math.max(0.5, aspect)), halfH / tanHalf)
-  look.set(cx, cy - 0.75, 0)
-  pos.set(cx, cy + 2.5, d)
+/** Unit vector from the look target back to the camera. */
+function offsetDir(out: THREE.Vector3): THREE.Vector3 {
+  const cp = Math.cos(PITCH)
+  // -X is "behind the squad"; swinging toward +Z puts the camera off to one side.
+  return out.set(-Math.cos(YAW) * cp, Math.sin(PITCH), Math.sin(YAW) * cp)
+}
+
+/** Smallest distance along `offsetDir` that keeps the whole fit box inside the frustum. */
+function fightFraming(aspect: number, pos: THREE.Vector3): void {
+  offsetDir(_offset)
+  _fwd.copy(_offset).multiplyScalar(-1)
+  _right.set(-_fwd.z, 0, _fwd.x).normalize()
+  _up.crossVectors(_right, _fwd).normalize()
+
+  const tanV = Math.tan((FOV * Math.PI) / 360)
+  const tanH = tanV * Math.max(0.5, aspect)
+
+  let d = 0
+  for (let i = 0; i < 8; i++) {
+    _corner
+      .set(i & 1 ? FIT_MAX.x : FIT_MIN.x, i & 2 ? FIT_MAX.y : FIT_MIN.y, i & 4 ? FIT_MAX.z : FIT_MIN.z)
+      .sub(FIGHT_LOOK)
+    const need =
+      Math.max(Math.abs(_corner.dot(_right)) / tanH, Math.abs(_corner.dot(_up)) / tanV) - _corner.dot(_fwd)
+    if (need > d) d = need
+  }
+  pos.copy(FIGHT_LOOK).addScaledVector(_offset, d * MARGIN)
 }
 
 export default function CameraRig() {
@@ -46,22 +85,24 @@ export default function CameraRig() {
     const phase = w.phase
     const cam = camera as THREE.PerspectiveCamera
     const aspect = cam.aspect || 16 / 9
-    fightFraming(aspect, _fightPos, _fightLook)
+    fightFraming(aspect, _fightPos)
 
     if (phase === 'PODIUM' || phase === 'RESULTS') {
       _goalPos.copy(PODIUM_POS)
       _goalLook.copy(PODIUM_LOOK)
     } else if (phase === 'VICTORY') {
+      // Same angle, pushed in on CODEX for the death sequence.
+      _victoryPos.set(BOSS_X, BOSS_Y - 0.5, 0).addScaledVector(offsetDir(_offset), 19)
       const p = Math.max(0, Math.min(1, (w.now - w.phaseStartedAt) / VICTORY_DURATION_MS))
       const e = p * p * (3 - 2 * p)
-      _goalPos.copy(_fightPos).lerp(VICTORY_POS, e * 0.55)
-      _goalLook.copy(_fightLook).lerp(VICTORY_LOOK, e * 0.7)
+      _goalPos.copy(_fightPos).lerp(_victoryPos, e * 0.7)
+      _goalLook.copy(FIGHT_LOOK).lerp(VICTORY_LOOK, e * 0.8)
     } else if (phase === 'DEFEAT') {
       _goalPos.copy(_fightPos)
-      _goalLook.copy(_fightLook).lerp(DEFEAT_LOOK, 0.35)
+      _goalLook.copy(FIGHT_LOOK).lerp(DEFEAT_LOOK, 0.4)
     } else {
       _goalPos.copy(_fightPos)
-      _goalLook.copy(_fightLook)
+      _goalLook.copy(FIGHT_LOOK)
     }
 
     const c = cur.current

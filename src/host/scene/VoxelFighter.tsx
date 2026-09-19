@@ -130,6 +130,17 @@ export default function VoxelFighter({
         <mesh position={[0.29, 1.2, 0]} material={accentMat}>
           <boxGeometry args={[0.06, 0.5, 0.5]} />
         </mesh>
+        {/* back plate + shoulder flashes: the camera is behind the squad, so identity has to read
+            from this side too */}
+        <mesh position={[-0.29, 1.2, 0]} material={accentMat}>
+          <boxGeometry args={[0.06, 0.56, 0.62]} />
+        </mesh>
+        <mesh position={[0, 1.78, -0.52]} material={accentMat}>
+          <boxGeometry args={[0.3, 0.12, 0.3]} />
+        </mesh>
+        <mesh position={[0, 1.78, 0.52]} material={accentMat}>
+          <boxGeometry args={[0.3, 0.12, 0.3]} />
+        </mesh>
         {/* arms (pivot at shoulder) */}
         <mesh ref={leftArm} position={[0, 1.5, -0.52]} material={mainMat}>
           <boxGeometry args={[0.22, 0.7, 0.22]} />

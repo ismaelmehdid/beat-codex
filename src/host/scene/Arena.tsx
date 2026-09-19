@@ -6,7 +6,7 @@ import { Grid } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
 import { useMemo, useRef } from 'react'
 import * as THREE from 'three'
-import { BOSS_X, BOSS_Y, PLAYER_MAX_X, PLAYER_MIN_X } from '../../game/constants'
+import { BOSS_X, BOSS_Y, PLAYER_LINE_X, PLAYER_MAX_Z, PLAYER_MIN_Z } from '../../game/constants'
 import { getWorld, useWorld } from '../../game/store'
 import { CODEX_ACCENT, CODEX_BLUE } from '../../lib/colors'
 
@@ -48,26 +48,41 @@ function Boundaries() {
     }),
     [],
   )
+  // The lane runs along X toward CODEX; the rails mark the strafe limits and, seen from behind
+  // the squad, converge in perspective straight at the boss.
+  const railZ = PLAYER_MAX_Z + 0.8
+  const railBackX = PLAYER_LINE_X - 7
+  const railFrontX = BOSS_X + 3
+  const railLen = railFrontX - railBackX
+  const railMidX = (railFrontX + railBackX) / 2
+  const crossW = (PLAYER_MAX_Z - PLAYER_MIN_Z) + 1.6
+  const postX = [PLAYER_LINE_X - 5, PLAYER_LINE_X + 3, BOSS_X - 4]
   const geos = useMemo(
     () => ({
-      side: new THREE.BoxGeometry(0.08, 0.06, 13),
-      post: new THREE.BoxGeometry(0.14, 2.4, 0.14),
-      back: new THREE.BoxGeometry(40, 0.06, 0.08),
-      front: new THREE.BoxGeometry(40, 0.04, 0.06),
-      barrier: new THREE.BoxGeometry(0.06, 0.05, 13),
+      rail: new THREE.BoxGeometry(railLen, 0.07, 0.1),
+      post: new THREE.BoxGeometry(0.14, 2.2, 0.14),
+      cross: new THREE.BoxGeometry(0.1, 0.06, crossW),
+      back: new THREE.BoxGeometry(0.08, 0.05, crossW),
     }),
-    [],
+    [railLen, crossW],
   )
-  const xMin = PLAYER_MIN_X - 0.6
   if (hidden) return null
   return (
     <group>
-      <mesh geometry={geos.side} material={mats.cyan} position={[xMin, 0.03, 0]} />
-      <mesh geometry={geos.post} material={mats.cyan} position={[xMin, 1.2, -6.5]} />
-      <mesh geometry={geos.post} material={mats.cyan} position={[xMin, 1.2, 6.5]} />
-      <mesh geometry={geos.back} material={mats.magenta} position={[0, 0.03, -6.5]} />
-      <mesh geometry={geos.front} material={mats.dim} position={[0, 0.02, 6.5]} />
-      <mesh geometry={geos.barrier} material={mats.red} position={[PLAYER_MAX_X + 1.2, 0.03, 0]} />
+      {/* strafe rails */}
+      <mesh geometry={geos.rail} material={mats.cyan} position={[railMidX, 0.03, railZ]} />
+      <mesh geometry={geos.rail} material={mats.cyan} position={[railMidX, 0.03, -railZ]} />
+      {postX.map((x) => (
+        <group key={x}>
+          <mesh geometry={geos.post} material={mats.cyan} position={[x, 1.1, railZ]} />
+          <mesh geometry={geos.post} material={mats.cyan} position={[x, 1.1, -railZ]} />
+        </group>
+      ))}
+      {/* the line the squad holds, and the dim edge behind them */}
+      <mesh geometry={geos.cross} material={mats.magenta} position={[PLAYER_LINE_X + 2.6, 0.03, 0]} />
+      <mesh geometry={geos.back} material={mats.dim} position={[PLAYER_LINE_X - 5, 0.02, 0]} />
+      {/* CODEX's threshold */}
+      <mesh geometry={geos.cross} material={mats.red} position={[BOSS_X - 5, 0.03, 0]} />
     </group>
   )
 }

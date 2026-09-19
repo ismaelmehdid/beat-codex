@@ -6,7 +6,7 @@ import { useFrame } from '@react-three/fiber'
 import { useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import { useShallow } from 'zustand/react/shallow'
-import { PLAYER_HP, PLAYER_SPEED, RESPAWN_DELAY_MS, spawnXForIndex, zForIndex } from '../../game/constants'
+import { PLAYER_HP, PLAYER_SPEED, RESPAWN_DELAY_MS, spawnZForIndex, xForIndex } from '../../game/constants'
 import { getWorld, useWorld } from '../../game/store'
 import TextSprite from './TextSprite'
 import VoxelFighter from './VoxelFighter'
@@ -66,11 +66,13 @@ function Fighter({ id }: { id: string }) {
 
     if (model.current) {
       model.current.visible = alive
-      model.current.rotation.y = p.facing === 1 ? 0 : Math.PI
+      // Always squared up at CODEX (+X); strafing only leans the body.
+      model.current.rotation.y = 0
+      model.current.rotation.x = (p.vz / PLAYER_SPEED) * 0.12
     }
     if (live.current) live.current.visible = alive
     if (label.current) label.current.visible = p.connected
-    walkRef.current = Math.min(1, Math.abs(p.vx) / PLAYER_SPEED)
+    walkRef.current = Math.min(1, Math.abs(p.vz) / PLAYER_SPEED)
     flashRef.current = now - p.lastHitAt < 120 ? 1 : 0
     dimRef.current = p.connected ? 1 : 0.35
     mats.disc.opacity = p.connected ? 0.35 : 0.12
@@ -88,7 +90,7 @@ function Fighter({ id }: { id: string }) {
     if (bc) {
       bc.visible = !alive
       if (!alive) {
-        bc.position.set(spawnXForIndex(p.index) - p.x, 0.03, zForIndex(p.index) - p.z)
+        bc.position.set(xForIndex(p.index) - p.x, 0.03, spawnZForIndex(p.index) - p.z)
         const remaining = p.respawnAt !== null ? Math.max(0, Math.min(1, (p.respawnAt - now) / RESPAWN_DELAY_MS)) : 1
         const s = 0.45 + remaining * 1.7
         const t = clock.elapsedTime

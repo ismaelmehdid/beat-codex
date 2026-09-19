@@ -1,21 +1,33 @@
-// ---- Arena layout (world units). X is the gameplay axis. Players left, CODEX right. ----
+/**
+ * Arena layout (world units).
+ *
+ *   X is the LANE axis: the squad holds a line near -X, CODEX looms at +X, and every projectile
+ *   travels along it. Players do not control X.
+ *   Z is the STRAFE axis: the only axis players move on. CODEX fires straight down a lane at a
+ *   fixed Z, so dodging means moving sideways.
+ *
+ * The camera sits behind the squad looking down the lane, which puts Z across the screen.
+ */
 export const FLOOR_Y = 0
-export const PLAYER_MIN_X = -14
-export const PLAYER_MAX_X = -2.5
-export const PLAYER_SPAWN_X = -9
-export const PLAYER_SPAWN_X_JITTER = 2.5
-export const PLAYER_Z_LANES = 7 // lanes across depth
-export const PLAYER_Z_STEP = 1.1
+/** Where the squad holds the line. */
+export const PLAYER_LINE_X = -9
+/** Rows of depth around the line so a crowd never overlaps exactly. */
+export const PLAYER_ROWS = 3
+export const PLAYER_ROW_STEP = 1.6
+/** Strafe limits. */
+export const PLAYER_MIN_Z = -7.5
+export const PLAYER_MAX_Z = 7.5
 export const PLAYER_RADIUS = 0.8
 export const PLAYER_HEIGHT = 1.8
 export const PLAYER_HP = 100
 export const PLAYER_SPEED = 9 // units / second
 
-export const BOSS_X = 10
-export const BOSS_Y = 5.5
+export const BOSS_X = 11
+export const BOSS_Y = 5.6
 export const BOSS_Z = 0
-export const BOSS_CORE_SIZE = 6 // edge length of the main cube
-export const BOSS_HIT_RADIUS = 4.6 // sphere used for fireball collision
+// Seen down the lane, CODEX sits far from the camera, so it needs real bulk to loom.
+export const BOSS_CORE_SIZE = 7.5 // edge length of the main cube
+export const BOSS_HIT_RADIUS = 5.6 // sphere used for fireball collision
 
 // ---- Combat ----
 export const FIRE_COOLDOWN_MS = 450
@@ -67,18 +79,18 @@ export function bossAttackIntervalFor(playerCount: number): number {
   return Math.max(BOSS_ATTACK_INTERVAL_MIN_MS, Math.min(BOSS_ATTACK_INTERVAL_MAX_MS, raw))
 }
 
-/** Deterministic depth lane so fighters stay visually distinct. */
-export function zForIndex(index: number): number {
-  const lane = index % PLAYER_Z_LANES
-  const centered = lane - (PLAYER_Z_LANES - 1) / 2
-  // alternate direction on each wrap so late joiners don't stack exactly behind early ones
-  const wrap = Math.floor(index / PLAYER_Z_LANES)
-  const offset = (wrap % 2 === 0 ? 1 : -1) * centered * PLAYER_Z_STEP
-  return offset + (wrap * 0.35) % PLAYER_Z_STEP
+/** Fixed lane depth for a fighter: rows staggered around the line so a crowd reads as a squad. */
+export function xForIndex(index: number): number {
+  const row = index % PLAYER_ROWS
+  const centered = row - (PLAYER_ROWS - 1) / 2
+  // nudge each wrap so the 4th, 7th... fighter doesn't sit exactly on the 1st
+  const wrap = Math.floor(index / PLAYER_ROWS)
+  return PLAYER_LINE_X + centered * PLAYER_ROW_STEP + ((wrap % 3) - 1) * 0.45
 }
 
-export function spawnXForIndex(index: number): number {
-  // spread spawns a little so a crowd doesn't spawn inside one another
-  const t = ((index * 7) % 11) / 10 // 0..1 pseudo-random but deterministic
-  return PLAYER_SPAWN_X + (t - 0.5) * 2 * PLAYER_SPAWN_X_JITTER
+/** Deterministic spread along the strafe axis so a crowd never spawns on one spot. */
+export function spawnZForIndex(index: number): number {
+  const span = PLAYER_MAX_Z - PLAYER_MIN_Z - 3
+  const t = ((index * 5) % 13) / 13
+  return PLAYER_MIN_Z + 1.5 + t * span
 }

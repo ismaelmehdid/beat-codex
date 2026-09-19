@@ -58,6 +58,13 @@ Both write screenshots to `test-results/` and exit non-zero on page errors or fa
 - Full-screen the browser (F11) and hide the cursor. Bloom on; if the GPU struggles, reload with `?nobloom=1`.
 - Fight length is tuned around 45 to 60 s for a 10-player crowd; adjust `BOSS_HP_PER_PLAYER` in `src/game/constants.ts` if the crowd is much bigger or smaller.
 
+## Arena axes
+
+The camera sits behind the squad looking down the lane at CODEX, so:
+
+- **X is the lane axis.** The squad holds a line near `PLAYER_LINE_X`, CODEX looms at `BOSS_X`, and every projectile travels along it. Players never control X; each fighter gets a fixed row offset so a crowd has depth.
+- **Z is the strafe axis.** The only axis players move on, and it reads across the screen. CODEX locks onto a player's Z at the moment it fires and sends the orb straight down that lane with no lead, so the only way out is to move sideways. Stand still and you get hit.
+
 ## Tuning
 
 `src/game/constants.ts`: boss HP scaling (`BOSS_BASE_HP + players * BOSS_HP_PER_PLAYER`), team lives (`max(8, players*3)`), damage, cooldowns, phase durations. CODEX's attack cadence scales with the crowd via `bossAttackIntervalFor` (2.4s for a tiny squad down to 0.9s at 17+), because the boss targets one living player at a time and a small group would otherwise be focused down.

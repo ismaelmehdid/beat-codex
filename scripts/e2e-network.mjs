@@ -91,13 +91,13 @@ try {
   }))
   check('host loop runs at a usable rate', tps >= 10, `${tps} ticks/s`)
   const before = await playerByName(host, 'ALICE')
-  await hold(p1, /→|right/i, 2500)
+  await hold(p1, /→|right/i, 2200)
   await sleep(600)
   const after = await playerByName(host, 'ALICE')
-  check('RIGHT moves ALICE right', after.x > before.x + 2, `x ${before.x.toFixed(1)} -> ${after.x.toFixed(1)}`)
-  check('release stops ALICE', after.vx === 0 && !after.input.right, `vx=${after.vx}`)
+  check('RIGHT strafes ALICE toward +Z', after.z > before.z + 2, `z ${before.z.toFixed(1)} -> ${after.z.toFixed(1)}`)
+  check('release stops ALICE', after.vz === 0 && !after.input.right, `vz=${after.vz}`)
   const bobBefore = await playerByName(host, 'BOB')
-  check('BOB did not move', Math.abs(bobBefore.x - (await playerByName(host, 'BOB')).x) < 0.01)
+  check('BOB did not move', Math.abs(bobBefore.z - (await playerByName(host, 'BOB')).z) < 0.01)
 
   for (let i = 0; i < 3; i++) {
     await tap(p1, /fire/i)

@@ -84,9 +84,9 @@ export function connectedPlayerCount(state: GameState): number {
 }
 
 function placeAtSpawn(p: Player): void {
-  p.x = C.spawnXForIndex(p.index)
-  p.z = C.zForIndex(p.index)
-  p.vx = 0
+  p.x = C.xForIndex(p.index)
+  p.z = C.spawnZForIndex(p.index)
+  p.vz = 0
   p.facing = 1
 }
 
@@ -128,7 +128,7 @@ export function addPlayer(state: GameState, id: string, name: string, opts: { is
     isFake: Boolean(opts.isFake),
     x: 0,
     z: 0,
-    vx: 0,
+    vz: 0,
     facing: 1,
     damageDealt: 0,
     deaths: 0,
@@ -387,7 +387,6 @@ function spawnFireball(state: GameState, p: Player): void {
   p.lastFireTime = now
   p.shotsFired += 1
   p.pendingShots = 0
-  p.facing = 1
   pushFx(state, 'fire', sx, sy, sz, { color: p.color, playerId: p.id })
 }
 
@@ -401,15 +400,15 @@ function bossAttack(state: GameState): void {
   const target = targets[Math.floor(Math.random() * targets.length)]
   const sx = state.boss.x - C.BOSS_CORE_SIZE / 2
   const sy = state.boss.y
-  const sz = state.boss.z
-  // Aim at where the target stands now (+ a little lead), so moving dodges it.
-  const tx = target.x + target.vx * 0.35
-  const ty = 0.9
-  const tz = target.z
+  // Locked to the target's lane at the moment of firing and travelling purely along -X, so the
+  // only way out is to strafe. No lead: leading the target would make dodging pointless.
+  const sz = target.z
+  const tx = target.x
+  const ty = C.PLAYER_HEIGHT / 2
   const dx = tx - sx
   const dy = ty - sy
-  const dz = tz - sz
-  const len = Math.hypot(dx, dy, dz) || 1
+  const dz = 0
+  const len = Math.hypot(dx, dy) || 1
   const s = C.BOSS_PROJECTILE_SPEED / len
   state.projectiles.push({
     id: nextProjectileId++,
@@ -472,20 +471,21 @@ function simulatePlaying(state: GameState, dt: number): void {
     }
 
     if (!p.alive) {
-      p.vx = 0
+      p.vz = 0
       if (p.respawnAt !== null && now >= p.respawnAt) respawnPlayer(state, p)
       continue
     }
 
     if (!p.connected) {
-      p.vx = 0
+      p.vz = 0
       continue
     }
 
+    // RIGHT strafes toward +Z, which the behind-the-squad camera shows as screen-right.
     const dir = (p.input.right ? 1 : 0) - (p.input.left ? 1 : 0)
-    p.vx = dir * C.PLAYER_SPEED
+    p.vz = dir * C.PLAYER_SPEED
     if (dir !== 0) {
-      p.x = Math.min(C.PLAYER_MAX_X, Math.max(C.PLAYER_MIN_X, p.x + p.vx * dt))
+      p.z = Math.min(C.PLAYER_MAX_Z, Math.max(C.PLAYER_MIN_Z, p.z + p.vz * dt))
       p.facing = dir > 0 ? 1 : -1
     }
 
@@ -534,7 +534,7 @@ function simulatePlaying(state: GameState, dt: number): void {
       explodeBossProjectile(state, pr)
       continue
     }
-    if (age > C.BOSS_PROJECTILE_MAX_AGE_MS || pr.x < C.PLAYER_MIN_X - 6) continue
+    if (age > C.BOSS_PROJECTILE_MAX_AGE_MS || pr.x < C.PLAYER_LINE_X - 8) continue
     survivors.push(pr)
   }
   if (state.phase === 'PLAYING') state.projectiles = survivors

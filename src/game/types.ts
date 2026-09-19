@@ -25,9 +25,13 @@ export interface Player {
   connected: boolean
   isFake: boolean
 
+  /** lane depth: fixed per player, never controlled */
   x: number
+  /** strafe position: the only axis players control */
   z: number
-  vx: number
+  /** strafe velocity */
+  vz: number
+  /** strafe direction for the lean animation (1 = +Z) */
   facing: 1 | -1
 
   damageDealt: number

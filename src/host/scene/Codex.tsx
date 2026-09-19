@@ -18,7 +18,7 @@ const HALF = BOSS_CORE_SIZE / 2
 const PLATE = BOSS_CORE_SIZE - 0.7
 const PLATE_T = 0.35
 const INNER = BOSS_CORE_SIZE - 0.8
-const EYE_R = 1.15
+const EYE_R = 1.35
 const EYE_LOCAL: [number, number, number] = [-(HALF + 0.2), 0.55, 0]
 
 type V3 = [number, number, number]
@@ -438,8 +438,8 @@ export default function Codex() {
           />
         ))}
         <lineSegments geometry={geos.edges} material={mats.edge} />
-        {/* Codex mark hovering off the face the audience actually sees */}
-        <sprite material={mats.logo} position={[-0.6, 0.6, HALF + 0.4]} scale={[3.2, 3.2, 1]} />
+        {/* Codex mark hovering off the front (-X) face, above the eye, facing the audience */}
+        <sprite material={mats.logo} position={[-(HALF + 0.5), 2.75, 0]} scale={[1.9, 1.9, 1]} />
         <group ref={cracks50} visible={false}>
           {CRACKS_50.map((c, i) => (
             <mesh key={i} geometry={geos.crack} material={mats.crack} position={c.pos} rotation={c.rot} scale={[1, c.len, 1]} />
