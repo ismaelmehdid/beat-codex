@@ -26,7 +26,7 @@ export const EVT = {
   PHASE: 'PHASE',
   /** host -> all. Periodic (~1Hz) reliability snapshot: phase + per-player personal state. */
   SNAPSHOT: 'SNAPSHOT',
-  /** host -> all. Immediate personal state change for one player (hit / death / respawn). */
+  /** host -> all. Immediate personal state change for one or more players (hit / death / respawn), batched per tick. */
   PLAYER_STATE: 'PLAYER_STATE',
   /** host -> all. Final result + ranking. */
   GAME_OVER: 'GAME_OVER',
@@ -65,8 +65,9 @@ export interface PlayerNetState {
   connected: boolean
 }
 
-export interface PlayerStatePayload extends PlayerNetState {
-  id: string
+/** Batched: only the players whose state changed this tick. Phones read `players[myId]`. */
+export interface PlayerStatePayload {
+  players: Record<string, PlayerNetState>
 }
 
 export interface RankedPlayer {
