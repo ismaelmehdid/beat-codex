@@ -15,7 +15,7 @@ No server. The host browser is the authoritative game server; Supabase Realtime 
 ```bash
 nvm use            # Node 22 (.nvmrc)
 npm install
-cp .env.example .env
+cp .env.example .env.local
 # fill VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY (Project Settings -> API, anon key only)
 npm run dev        # serves on your LAN (--host) so phones can reach it
 ```
@@ -37,12 +37,22 @@ Phones must be able to reach the laptop's URL (same Wi‑Fi) or deploy the stati
 
 `?nobloom=1` disables the bloom post-process on weak GPUs.
 
-## Smoke test
+## Tests (headless Chromium via Playwright)
 
 ```bash
 npm run dev &
-node scripts/smoke.mjs   # drives the whole host flow headlessly, screenshots into test-results/
+node scripts/smoke.mjs          # host flow offline: lobby -> fight -> death -> victory -> podium -> results -> play again -> defeat
+node scripts/e2e-network.mjs    # real Supabase: host + 2 phones join, move, fire, die, respawn, results, play again, leave
 ```
+
+Both write screenshots to `test-results/` and exit non-zero on page errors or failed checks. The e2e test needs the Supabase env vars.
+
+## Demo-day checklist
+
+- Laptop and phones on the same network, or deploy `dist/` (static) and open the deployed `/host`.
+- Open `/host` once and keep the tab: the room code is kept in `sessionStorage`, so an accidental reload keeps the same room and phones re-handshake automatically.
+- Full-screen the browser (F11) and hide the cursor. Bloom on; if the GPU struggles, reload with `?nobloom=1`.
+- Fight length is tuned around 45 to 60 s for a 10-player crowd; adjust `BOSS_HP_PER_PLAYER` in `src/game/constants.ts` if the crowd is much bigger or smaller.
 
 ## Tuning
 
