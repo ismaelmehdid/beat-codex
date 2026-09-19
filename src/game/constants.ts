@@ -37,8 +37,10 @@ export const FIREBALL_RADIUS = 0.35
 export const FIREBALL_SPAWN_Y = 1.3
 export const FIREBALL_MAX_AGE_MS = 3000
 
-export const BOSS_BASE_HP = 400
-export const BOSS_HP_PER_PLAYER = 450
+// Tuned for a ~40% shorter fight: team damage output is unchanged, so the round length
+// scales directly with these two numbers.
+export const BOSS_BASE_HP = 240
+export const BOSS_HP_PER_PLAYER = 270
 export const BOSS_ATTACK_INTERVAL_MS = 1500
 export const BOSS_ATTACK_INTERVAL_MIN_MS = 900
 export const BOSS_ATTACK_INTERVAL_MAX_MS = 2400

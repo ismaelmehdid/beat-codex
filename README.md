@@ -67,7 +67,7 @@ The camera sits behind the squad looking down the lane at CODEX, so:
 
 ## Tuning
 
-`src/game/constants.ts`: boss HP scaling (`BOSS_BASE_HP + players * BOSS_HP_PER_PLAYER`), team lives (`max(8, players*3)`), damage, cooldowns, phase durations. CODEX's attack cadence scales with the crowd via `bossAttackIntervalFor` (2.4s for a tiny squad down to 0.9s at 17+), because the boss targets one living player at a time and a small group would otherwise be focused down.
+`src/game/constants.ts`: boss HP scaling (`BOSS_BASE_HP + players * BOSS_HP_PER_PLAYER`, currently 240 + 270/player; round length scales directly with these), team lives (`max(8, players*3)`), damage, cooldowns, phase durations. CODEX's attack cadence scales with the crowd via `bossAttackIntervalFor` (2.4s for a tiny squad down to 0.9s at 17+), because the boss targets one living player at a time and a small group would otherwise be focused down.
 
 Brand colors live in `src/lib/colors.ts`: fighters wear Claude orange with a per-player accent, CODEX and everything it owns use the Codex blues. Logos are in `public/logos/`.
 
