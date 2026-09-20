@@ -110,7 +110,8 @@ try {
   await hold(p2, /fire/i, 2000)
   await sleep(600)
   const bobShots = (await playerByName(host, 'BOB')).shotsFired
-  check('FIRE held 2s -> BOB auto-fired 3..6 shots', bobShots >= 3 && bobShots <= 6, `shotsFired=${bobShots}`)
+  // held fire repeats every FIRE_AUTO_INTERVAL_MS (120ms) -> ~16 shots in 2s, allow for frame jitter
+  check('FIRE held 2s -> BOB auto-fired 8..22 shots', bobShots >= 8 && bobShots <= 22, `shotsFired=${bobShots}`)
   await sleep(2500)
   const w1 = await world(host)
   const alice = Object.values(w1.players).find((p) => p.name === 'ALICE')

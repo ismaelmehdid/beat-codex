@@ -30,7 +30,13 @@ export const BOSS_CORE_SIZE = 7.5 // edge length of the main cube
 export const BOSS_HIT_RADIUS = 5.6 // sphere used for fireball collision
 
 // ---- Combat ----
-export const FIRE_COOLDOWN_MS = 450
+/**
+ * Taps are never rate limited: every press fires on the very next frame. Only HELD fire repeats
+ * on a timer, otherwise holding the button would spawn a fireball every frame.
+ */
+export const FIRE_AUTO_INTERVAL_MS = 120
+/** Cap on taps banked while frames catch up, so a bad client cannot flood the arena. */
+export const MAX_QUEUED_SHOTS = 3
 export const FIREBALL_SPEED = 30
 export const FIREBALL_DAMAGE = 10
 export const FIREBALL_RADIUS = 0.35
@@ -39,8 +45,8 @@ export const FIREBALL_MAX_AGE_MS = 3000
 
 // Tuned for a ~40% shorter fight: team damage output is unchanged, so the round length
 // scales directly with these two numbers.
-export const BOSS_BASE_HP = 240
-export const BOSS_HP_PER_PLAYER = 270
+export const BOSS_BASE_HP = 900
+export const BOSS_HP_PER_PLAYER = 1010
 export const BOSS_ATTACK_INTERVAL_MS = 1500
 export const BOSS_ATTACK_INTERVAL_MIN_MS = 900
 export const BOSS_ATTACK_INTERVAL_MAX_MS = 2400

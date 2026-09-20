@@ -12,7 +12,7 @@ import {
 } from 'react'
 import { PLAYER_HP } from '../game/constants'
 import type { Phase } from '../game/types'
-import { INPUT_HEARTBEAT_MS, INPUT_SEND_MIN_INTERVAL_MS } from '../lib/protocol'
+import { INPUT_CHANGE_MIN_INTERVAL_MS, INPUT_HEARTBEAT_MS, INPUT_SEND_MIN_INTERVAL_MS } from '../lib/protocol'
 import type { ChannelStatus, InputState, MeState } from '../net/usePlayerChannel'
 
 type Control = 'l' | 'r' | 'f'
@@ -50,7 +50,8 @@ export function vibrate(pattern: number | number[]): void {
 function useInputSender(sendInput: (s: InputState) => void, intervalMs: number) {
   const sendRef = useRef(sendInput)
   sendRef.current = sendInput
-  // The host raises this as the room fills up: every broadcast costs one Realtime event per phone.
+  // The host raises this as the room fills up, but it only slows the HEARTBEAT. A press or a
+  // release always goes out on the next tick so the controls stay instant in any room size.
   const intervalRef = useRef(intervalMs)
   intervalRef.current = Math.max(INPUT_SEND_MIN_INTERVAL_MS, intervalMs)
 
@@ -68,7 +69,7 @@ function useInputSender(sendInput: (s: InputState) => void, intervalMs: number) 
   }, [])
 
   const scheduleSend = useCallback(() => {
-    const min = intervalRef.current
+    const min = INPUT_CHANGE_MIN_INTERVAL_MS
     const elapsed = Date.now() - lastSendAtRef.current
     if (elapsed >= min) {
       clearTimer(trailingRef)

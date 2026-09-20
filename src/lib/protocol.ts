@@ -105,7 +105,12 @@ export interface WelcomePayload {
   inputIntervalMs?: number
 }
 
-/** Phones coalesce INPUT sends to at most one per this interval (taps are never lost thanks to `s`). */
+/**
+ * A press or release is sent immediately; this is only a floor against pathological bursts.
+ * Keeping it tiny is what makes the controls feel instant.
+ */
+export const INPUT_CHANGE_MIN_INTERVAL_MS = 40
+/** Baseline heartbeat interval; the host raises it as the room fills (inputIntervalForPlayers). */
 export const INPUT_SEND_MIN_INTERVAL_MS = 150
 /** While any control is held, phones re-send INPUT at this interval so the host timeout never trips. */
 export const INPUT_HEARTBEAT_MS = 600

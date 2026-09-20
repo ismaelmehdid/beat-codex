@@ -190,7 +190,10 @@ export function applyInput(
   if (typeof input.fireSeq === 'number') {
     // Strictly greater: a *decrease* means the phone remounted (its counter restarted at 0), so
     // rebase silently instead of spawning a phantom fireball on the first input of a new round.
-    if (p.lastFireSeq !== null && input.fireSeq > p.lastFireSeq) p.pendingShots = 1
+    // Bank the full delta: if two taps landed inside one message, both still fire.
+    if (p.lastFireSeq !== null && input.fireSeq > p.lastFireSeq) {
+      p.pendingShots = Math.min(C.MAX_QUEUED_SHOTS, p.pendingShots + (input.fireSeq - p.lastFireSeq))
+    }
     p.lastFireSeq = input.fireSeq
   }
   if (!p.connected) {
@@ -203,7 +206,7 @@ export function applyInput(
 export function fireIntent(state: GameState, id: string): void {
   const p = state.players[id]
   if (!p) return
-  p.pendingShots = 1
+  p.pendingShots = Math.min(C.MAX_QUEUED_SHOTS, p.pendingShots + 1)
   p.input.updatedAt = state.now
 }
 
@@ -386,7 +389,7 @@ function spawnFireball(state: GameState, p: Player): void {
   })
   p.lastFireTime = now
   p.shotsFired += 1
-  p.pendingShots = 0
+  if (p.pendingShots > 0) p.pendingShots -= 1
   pushFx(state, 'fire', sx, sy, sz, { color: p.color, playerId: p.id })
 }
 
@@ -489,8 +492,9 @@ function simulatePlaying(state: GameState, dt: number): void {
       p.facing = dir > 0 ? 1 : -1
     }
 
-    const wantsFire = p.pendingShots > 0 || p.input.fire
-    if (wantsFire && now - p.lastFireTime >= C.FIRE_COOLDOWN_MS) spawnFireball(state, p)
+    // A tap fires on the next frame, always. Only holding the button is rate limited.
+    if (p.pendingShots > 0) spawnFireball(state, p)
+    else if (p.input.fire && now - p.lastFireTime >= C.FIRE_AUTO_INTERVAL_MS) spawnFireball(state, p)
   }
 
   if (state.bossPaused) state.boss.nextAttackAt = now + state.boss.attackIntervalMs
